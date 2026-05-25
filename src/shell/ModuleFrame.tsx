@@ -40,11 +40,11 @@ export function ModuleFrame({ module, children }: ModuleFrameProps) {
       <aside
         className="pointer-events-auto absolute z-10 bg-card/60 backdrop-blur
           bottom-0 inset-x-0 max-h-[35dvh] overflow-auto border-t border-border/40
-          sm:bottom-0 sm:top-20 sm:inset-x-auto sm:left-0 sm:right-auto sm:w-72 sm:max-h-none
+          sm:top-20 sm:inset-x-auto sm:left-0 sm:right-auto sm:w-72 sm:h-auto sm:max-h-[70dvh]
           sm:border-r sm:border-t-0"
         aria-label="Module controls"
       >
-        <div className="flex h-full flex-col">
+        <div className="flex flex-col">
           <header className="border-b border-border/40 px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Controls
           </header>
