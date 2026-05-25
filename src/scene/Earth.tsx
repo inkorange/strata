@@ -3,6 +3,7 @@
 import { useFrame } from '@react-three/fiber'
 import { useRef } from 'react'
 import * as THREE from 'three'
+import { usePrefersReducedMotion } from '@/src/lib/accessibility'
 import { useStore } from '@/src/store'
 import { EarthInterior } from './EarthInterior'
 import { PRESETS } from './presets'
@@ -21,11 +22,13 @@ export function Earth() {
   const effectiveTier = useStore((s) => s.effectiveTier())
   const preset = PRESETS[effectiveTier]
   const textures = useEarthTextures()
+  const prefersReducedMotion = usePrefersReducedMotion()
 
   const surfaceRef = useRef<THREE.Mesh>(null)
   const cloudRef = useRef<THREE.Mesh>(null)
 
   useFrame((_, delta) => {
+    if (prefersReducedMotion) return
     if (surfaceRef.current) surfaceRef.current.rotation.y += SURFACE_ROTATION_RATE * delta
     if (cloudRef.current) cloudRef.current.rotation.y += CLOUD_ROTATION_RATE * delta
   })
