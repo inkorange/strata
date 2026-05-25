@@ -1,5 +1,6 @@
 'use client'
 
+import { Plates } from '@/src/tectonics/scene/Plates'
 import { CameraDolly } from './CameraDolly'
 import { Earth } from './Earth'
 import { PostProcessing } from './PostProcessing'
@@ -18,6 +19,7 @@ export function PersistentScene() {
         <Earth />
         <CameraDolly />
         <PostProcessing />
+        <Plates />
       </Scene>
     </div>
   )
