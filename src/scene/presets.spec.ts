@@ -8,9 +8,9 @@ describe('PRESETS', () => {
     )
   })
 
-  it('desktop-ultra enables bloom and vignette (ssao/dof disabled for v1 due to flicker)', () => {
+  it('desktop-ultra keeps only vignette in postFx (bloom/ssao/dof disabled for v1 due to flicker)', () => {
     const p: Preset = PRESETS['desktop-ultra']
-    expect(p.postFx.bloom).toBe(true)
+    expect(p.postFx.bloom).toBe(false)
     expect(p.postFx.vignette).toBe(true)
     expect(p.postFx.ssao).toBe(false)
     expect(p.postFx.dof).toBe(false)
