@@ -8,12 +8,12 @@ describe('PRESETS', () => {
     )
   })
 
-  it('desktop-ultra enables every post-fx pass', () => {
+  it('desktop-ultra enables bloom and vignette (ssao/dof disabled for v1 due to flicker)', () => {
     const p: Preset = PRESETS['desktop-ultra']
     expect(p.postFx.bloom).toBe(true)
-    expect(p.postFx.ssao).toBe(true)
-    expect(p.postFx.dof).toBe(true)
     expect(p.postFx.vignette).toBe(true)
+    expect(p.postFx.ssao).toBe(false)
+    expect(p.postFx.dof).toBe(false)
   })
 
   it('mobile-lite keeps bloom but drops the expensive passes', () => {

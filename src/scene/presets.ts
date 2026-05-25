@@ -41,7 +41,7 @@ export const PRESETS: Record<Tier, Preset> = {
     dprCap: 2,
     earth: { segments: 256, cloudSegments: 192, interior: true },
     atmosphere: { raymarched: true },
-    postFx: { bloom: true, ssao: true, dof: true, vignette: true },
+    postFx: { bloom: true, ssao: false, dof: false, vignette: true },
     anisotropy: 16,
     hdriPath: HDRI_PATH,
   },
