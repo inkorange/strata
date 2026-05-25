@@ -1,1 +1,417 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --color-bg-primary: #07051a;
+  --color-bg-secondary: #0d0a22;
+  --color-ink: #dffaff;
+  --color-ink-muted: #9aa0c8;
+  --color-accent-cyan: #5cc6ff;
+  --color-accent-pink: #ec59b6;
+  --color-attach-green: #a4ff8c;
+  --color-attach-yellow: #ffd97a;
+  --color-attach-red: #ff7a7a;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+/* Animated glow halo for modals.
+ * Apply `.modal-glow` to a positioned (relative/absolute/fixed) element to
+ * wrap it in a rotating, blurred conic-gradient haze. Reusable for any
+ * specialized modal that wants the "celebratory" treatment.
+ *
+ * Three layered glows counter-rotate at different speeds and use asymmetric
+ * border-radii so the rotating shapes never read as rectangles — they morph
+ * into soft drifting blobs as they spin.
+ *
+ * Layer 1 (::before)  — small, fast, sharper conic. Inset -36px.
+ * Layer 2 (::after)   — medium, counter-spin, blurrier conic. Inset -56px.
+ * Layer 3 (.modal-glow-blob child span) — large, very slow, radial gradient
+ *                       with off-center origin so it drifts like a lava lamp.
+ *                       Use as: <span class="modal-glow-blob" aria-hidden />
+ *                       as the first child inside the .modal-glow wrapper.
+ */
+@keyframes molecular-glow-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes molecular-glow-spin-reverse {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+/* One-shot mount fade for .modal-glow. Plays once when the wrapper mounts
+ * with the parent in its open state. The close-side fade rides the
+ * `transition: opacity` rule and triggers via [data-state="closed"]. */
+@keyframes modal-glow-mount {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Tailwind v4's CSS optimizer can drop custom rules that live outside any
+ * `@layer`. Wrapping the halo block in `@layer components` keeps it in the
+ * cascade and stops the build pipeline from tree-shaking it. */
+@layer components {
+  .modal-glow {
+    /* Apply this class to an INNER wrapper element inside the modal — never the
+     positioned shell itself, because the rotating pseudo-elements need their
+     own positioning context and stacking context, and pinning those onto a
+     `position: fixed` dialog interferes with its viewport-centered transform.
+     This wrapper takes its own `position: relative`. */
+    position: relative;
+    isolation: isolate;
+    overflow: visible;
+    /* Fade-in on mount + fade-out on parent close. The pseudo-elements
+     inherit this wrapper opacity, so all three halo layers tween together
+     instead of popping in/out when the drawer slides. */
+    opacity: 1;
+    animation: modal-glow-mount 280ms ease-out;
+    transition: opacity 200ms ease-out;
+  }
+
+  /* When the parent dialog/drawer/sheet enters its closed state, fade the
+   halo out so it doesn't sit fully opaque while the content slides away.
+   We target both data-state="closed" (vaul drawer + Base UI value form)
+   and the bare [data-closed] attribute (Base UI shorthand) to cover the
+   three different shell components we use. */
+  [data-state="closed"] .modal-glow,
+  [data-closed] .modal-glow {
+    opacity: 0;
+  }
+  .modal-glow::before,
+  .modal-glow::after {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+    z-index: -1;
+  }
+  .modal-glow::before {
+    inset: -36px;
+    /* Asymmetric border-radius creates a blob rather than a rounded rectangle.
+     Eight values: top-left, top-right, bottom-right, bottom-left for
+     horizontal radii, then the same four for vertical radii. */
+    border-radius: 42% 58% 38% 62% / 55% 45% 60% 40%;
+    background: conic-gradient(from 0deg, #5cc6ff, #ec59b6, #ffd97a, #5cc6ff);
+    filter: blur(34px);
+    opacity: 0.55;
+    animation: molecular-glow-spin 18s linear infinite;
+  }
+  .modal-glow::after {
+    inset: -56px;
+    border-radius: 60% 40% 55% 45% / 40% 60% 45% 55%;
+    background: conic-gradient(from 180deg, #ec59b6, #ffd97a, #5cc6ff, #ec59b6);
+    filter: blur(56px);
+    opacity: 0.4;
+    animation: molecular-glow-spin-reverse 30s linear infinite;
+  }
+  .modal-glow-blob {
+    position: absolute;
+    inset: -84px;
+    pointer-events: none;
+    z-index: -1;
+    /* Strong asymmetric radii — visibly non-circular silhouette so rotation
+     reads as a drifting blob, not a wheel. */
+    border-radius: 38% 62% 50% 50% / 65% 40% 60% 35%;
+    /* Off-center radial gradient so the brightness drifts as it spins. */
+    background: radial-gradient(
+      ellipse at 32% 58%,
+      rgba(92, 198, 255, 0.5) 0%,
+      rgba(236, 89, 182, 0.42) 32%,
+      rgba(255, 217, 122, 0.28) 58%,
+      transparent 78%
+    );
+    filter: blur(72px);
+    opacity: 0.55;
+    /* Off-center transform-origin so the blob sweeps an oval path rather than
+     rotating in place — combined with the asymmetric radius this destroys
+     the underlying rectangle shape entirely. */
+    transform-origin: 58% 42%;
+    animation: molecular-glow-spin 48s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .modal-glow::before,
+    .modal-glow::after,
+    .modal-glow-blob {
+      animation: none;
+    }
+  }
+
+  /* Glow halo for the demo step explanation panel.
+   *
+   * Approach borrowed from .button-glow: the glow layer keeps the
+   * panel's pill silhouette (border-radius: inherit) and never rotates
+   * as a shape. Color motion comes from sliding a wide linear gradient
+   * horizontally via background-position. This is critical for the
+   * panel because the panel is very WIDE — rotating a wide rectangle
+   * (even with asymmetric border-radius) sweeps its corners way past
+   * the panel bounds and looks like "rays shooting out". A static-
+   * silhouette layer with a sliding gradient stays hugged to the panel.
+   *
+   * Two layers: a sharper inner halo (close-in, brighter) and a softer
+   * outer halo (wider blur, dimmer) so the glow has depth without
+   * spiraling out. */
+  .panel-glow {
+    position: relative;
+    overflow: visible;
+    opacity: 1;
+    animation: modal-glow-mount 280ms ease-out;
+  }
+  .panel-glow-layer-1,
+  .panel-glow-layer-2 {
+    /* display: block so the empty spans get a layout box. Otherwise the
+     * default `display: inline` on <span> can leave them zero-sized in
+     * some browsers even with position: absolute set. */
+    display: block;
+    position: absolute;
+    border-radius: 1.5rem;
+    pointer-events: none;
+    background: linear-gradient(
+      90deg,
+      #5cc6ff 0%,
+      #ec59b6 25%,
+      #ffd97a 50%,
+      #ec59b6 75%,
+      #5cc6ff 100%
+    );
+    background-size: 200% 100%;
+    background-position: 0% 0%;
+    animation: button-glow-sweep 12s linear infinite;
+  }
+  .panel-glow-layer-1 {
+    inset: -6px;
+    filter: blur(14px);
+    opacity: 0.2;
+  }
+  .panel-glow-layer-2 {
+    inset: -12px;
+    filter: blur(26px);
+    opacity: 0.15;
+    /* Reverse + slower so the two layers don't move in lock-step. */
+    animation: button-glow-sweep 22s linear infinite reverse;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .panel-glow-layer-1,
+    .panel-glow-layer-2 {
+      animation: none;
+    }
+  }
+
+  /* Tighter sibling of .modal-glow for buttons. The element holding the
+   * gradient stays put (same shape as the button) — only the conic gradient's
+   * angle rotates via @property. This way the blurred halo always hugs the
+   * button outline; nothing swings out past the rounded-pill silhouette.
+   * Apply to any positioned button-like element. */
+  .button-glow {
+    position: relative;
+    isolation: isolate;
+    /* Sharp drop-shadow on the button label so it stays legible against
+     the bright gradient pills (tri-color CTA, gold→cyan Share, etc.).
+     1px offset + 1px blur + near-opaque black reads as a crisp dark edge
+     under the letterforms without softening them. Text-shadow inherits,
+     so a single rule covers all child text inside any .button-glow. */
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.95);
+  }
+  /* Pseudo-element keeps the button's pill silhouette (border-radius: inherit)
+   * and never rotates as a shape — so the halo always hugs the button outline.
+   * Color motion comes from sliding a wide linear gradient horizontally via
+   * background-position, which animates smoothly in every browser without
+   * needing @property. */
+  .button-glow::before {
+    content: "";
+    position: absolute;
+    inset: -10px;
+    border-radius: inherit;
+    background: linear-gradient(
+      90deg,
+      #5cc6ff 0%,
+      #ec59b6 25%,
+      #ffd97a 50%,
+      #ec59b6 75%,
+      #5cc6ff 100%
+    );
+    background-size: 200% 100%;
+    background-position: 0% 0%;
+    filter: blur(14px);
+    opacity: 0.35;
+    pointer-events: none;
+    z-index: -1;
+    animation: button-glow-sweep 6s linear infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .button-glow::before {
+      animation: none;
+    }
+  }
+} /* end @layer components */
+
+@keyframes button-glow-sweep {
+  to {
+    background-position: 200% 0%;
+  }
+}
+
+/* Shift the 3D scene canvas upward on mobile portrait so bottom panels
+ * (drawer triggers, step bubbles, validity bars) don't sit on top of
+ * the content the user is actually looking at. ~8dvh of upward
+ * translation moves the visual center of the scene from 50% → ~42% of
+ * the viewport height. Used on the /app and /demo/[id] canvas wrappers.
+ *
+ * Limited to mobile-width portrait so tablets in portrait — where the
+ * footer panels are smaller relative to the canvas — keep the natural
+ * centered framing. */
+@media (orientation: portrait) and (max-width: 767px) {
+  .scene-shift-portrait {
+    transform: translateY(-8dvh);
+  }
+}
+
+/* ============================================================
+ * Strata domain accent tokens — additive on top of the ported
+ * Molecular base. These are referenced by the hub module cards
+ * (src/shell/HubPage.tsx) and by per-module accent strips.
+ * Atmosphere and Earth Systems intentionally reuse Molecular's
+ * accent-cyan and a green sibling of attach-green so the two
+ * apps' palettes read as visibly the same family. Magma orange
+ * is Strata's one new note and doubles as an inkOrange wink.
+ * ============================================================ */
+@theme {
+  --color-accent-tectonics: #ff8c5a;
+  --color-accent-atmosphere: #5cc6ff;
+  --color-accent-systems: #7ad9aa;
+}
