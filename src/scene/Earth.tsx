@@ -41,7 +41,7 @@ export function Earth() {
           metalness={0.05}
           emissiveMap={textures.night}
           emissive={new THREE.Color('#ffd9a0')}
-          emissiveIntensity={0.7}
+          emissiveIntensity={1.0}
         />
       </mesh>
 
