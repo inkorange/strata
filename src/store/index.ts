@@ -1,0 +1,63 @@
+import { create } from 'zustand'
+import { createShellSlice, type ShellSlice } from './shellSlice'
+
+type Store = ShellSlice & {
+  /** Test-only helper: flush the persist debounce synchronously. */
+  __flushPersist?: () => void
+}
+
+const STORAGE_KEY = 'strata:shell'
+const PERSIST_DEBOUNCE_MS = 1000
+
+let persistTimer: ReturnType<typeof setTimeout> | null = null
+
+function readPersistedShell(): Partial<ShellSlice> {
+  if (typeof localStorage === 'undefined') return {}
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw) as Partial<ShellSlice>
+    // Only rehydrate fields we intentionally persist; ignore stale shape.
+    const out: Partial<ShellSlice> = {}
+    if (parsed.tierOverride !== undefined) out.tierOverride = parsed.tierOverride
+    if (parsed.activeModule !== undefined) out.activeModule = parsed.activeModule
+    if (parsed.highContrast !== undefined) out.highContrast = parsed.highContrast
+    return out
+  } catch {
+    return {}
+  }
+}
+
+function persistShell(state: ShellSlice) {
+  if (typeof localStorage === 'undefined') return
+  const payload = {
+    tierOverride: state.tierOverride,
+    activeModule: state.activeModule,
+    highContrast: state.highContrast,
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
+}
+
+export const useStore = create<Store>()((set, get, api) => {
+  const slice = createShellSlice(set, get, api)
+  const rehydrated = readPersistedShell()
+
+  return {
+    ...slice,
+    ...rehydrated,
+    __flushPersist: () => {
+      if (persistTimer) clearTimeout(persistTimer)
+      persistTimer = null
+      persistShell(get() as ShellSlice)
+    },
+  }
+})
+
+// Debounced persistence: subscribe once at module load.
+useStore.subscribe((state) => {
+  if (persistTimer) clearTimeout(persistTimer)
+  persistTimer = setTimeout(() => {
+    persistShell(state as ShellSlice)
+    persistTimer = null
+  }, PERSIST_DEBOUNCE_MS)
+})
