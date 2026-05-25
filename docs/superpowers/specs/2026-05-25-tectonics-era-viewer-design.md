@@ -417,6 +417,7 @@ After the implementer reports all tasks complete, the user should visually verif
 
 These belong in follow-up PRs, not this one:
 
+- **Sidebar visual treatment.** The current `ModuleFrame` left sidebar is plain (a "Controls" header + the module body). The user has flagged this as visually thin and worth a polish pass. Because the fix is a global change to `ModuleFrame` chrome (affects every module's sidebar, not just Tectonics), it's deferred to a dedicated UI-polish PR rather than bundled here. Tectonics ships with the existing plain sidebar; future PR upgrades it everywhere at once.
 - **Plate dragging.** User cannot manipulate plate positions. Future PR may add this for an interactive sandbox mode.
 - **Boundary classification visualization.** No mountain extrusion, no rift valleys, no trenches, no earthquake glyphs. The plates are flat colored polygons at radius 1.001.
 - **Velocity arrows.** No visible arrows showing plate motion direction. The motion is shown implicitly through the animation.
