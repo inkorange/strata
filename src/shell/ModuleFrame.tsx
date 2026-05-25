@@ -39,7 +39,7 @@ export function ModuleFrame({ module, children }: ModuleFrameProps) {
        * module's controls will land here once the simulation engine is wired. */}
       <aside
         className="pointer-events-auto absolute z-10 bg-card/60 backdrop-blur
-          bottom-0 inset-x-0 max-h-[35dvh] overflow-auto border-t border-border/40
+          bottom-0 inset-x-0 max-h-[45dvh] overflow-auto border-t border-border/40
           sm:top-20 sm:inset-x-auto sm:left-0 sm:right-auto sm:w-72 sm:h-auto sm:max-h-[70dvh]
           sm:border-r sm:border-t-0"
         aria-label="Module controls"
