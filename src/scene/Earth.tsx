@@ -4,10 +4,15 @@ import { useFrame } from '@react-three/fiber'
 import { useRef } from 'react'
 import * as THREE from 'three'
 import { useStore } from '@/src/store'
-import { AtmosphereRim } from './AtmosphereRim'
 import { EarthInterior } from './EarthInterior'
 import { PRESETS } from './presets'
 import { useEarthTextures } from './useEarthTextures'
+
+// import { AtmosphereRim } from './AtmosphereRim'
+// AtmosphereRim is deferred to a follow-up PR. The fresnel-based shader
+// produced color bleed across the visible disc that was hard to tune
+// without flicker. The component file in ./AtmosphereRim.tsx is kept
+// intact so the eventual fix can re-enable it without re-implementing.
 
 const SURFACE_ROTATION_RATE = 0.02 // rad/sec
 const CLOUD_ROTATION_RATE = 0.028 // slightly faster — winds aloft
@@ -57,7 +62,7 @@ export function Earth() {
         />
       </mesh>
 
-      <AtmosphereRim />
+      {/* <AtmosphereRim /> deferred per the import comment above */}
     </group>
   )
 }
