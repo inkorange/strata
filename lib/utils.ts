@@ -1,3 +1,6 @@
-// Re-export from the canonical location so @/lib/utils works for shadcn
-// components while the source of truth lives at src/lib/utils.ts.
-export { cn } from '@/src/lib/utils'
+import { type ClassValue, clsx } from 'clsx'
+import { twMerge } from 'tailwind-merge'
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
