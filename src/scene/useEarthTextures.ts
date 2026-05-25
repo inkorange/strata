@@ -5,13 +5,19 @@ import { useMemo } from 'react'
 import * as THREE from 'three'
 import { useStore } from '@/src/store'
 import { PRESETS } from './presets'
+import { TEXTURE_MANIFEST } from './textureManifest'
+
+function resolvePath(file: string): string {
+  const compressed = TEXTURE_MANIFEST[file]
+  return compressed ? `/textures/${compressed}` : `/textures/${file}`
+}
 
 const PATHS = {
-  day: '/textures/earth_daymap.jpg',
-  night: '/textures/earth_night.jpg',
-  clouds: '/textures/earth_clouds.jpg',
-  normal: '/textures/earth_normal.jpg',
-  roughness: '/textures/earth_roughness.jpg',
+  day: resolvePath('earth_daymap.jpg'),
+  night: resolvePath('earth_night.jpg'),
+  clouds: resolvePath('earth_clouds.jpg'),
+  normal: resolvePath('earth_normal.jpg'),
+  roughness: resolvePath('earth_roughness.jpg'),
 }
 
 /**

@@ -1,13 +1,29 @@
 'use client'
 
 import { Environment, OrbitControls, PerspectiveCamera } from '@react-three/drei'
-import { Canvas } from '@react-three/fiber'
+import { Canvas, useThree } from '@react-three/fiber'
 import { type ReactNode, useEffect, useMemo } from 'react'
 import * as THREE from 'three'
+import { KTX2Loader } from 'three/examples/jsm/loaders/KTX2Loader.js'
 import { detectTier } from '@/src/lib/tier'
 import { useStore } from '@/src/store'
 import { PRESETS } from './presets'
 import { Starfield } from './Starfield'
+
+function KTX2Setup() {
+  const { gl } = useThree()
+  useEffect(() => {
+    const ktx2 = new KTX2Loader()
+      .setTranscoderPath('https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/libs/basis/')
+      .detectSupport(gl)
+    THREE.DefaultLoadingManager.addHandler(/\.ktx2$/i, ktx2)
+    return () => {
+      // No removeHandler API; the loader stays registered for the lifetime
+      // of the page, which is what we want anyway.
+    }
+  }, [gl])
+  return null
+}
 
 interface SceneProps {
   children: ReactNode
@@ -46,6 +62,7 @@ export function Scene({ children, controls = true }: SceneProps) {
       }}
       style={{ position: 'absolute', inset: 0, background: '#07051a' }}
     >
+      <KTX2Setup />
       <PerspectiveCamera makeDefault position={camera.position} fov={camera.fov} />
 
       {/* IBL: HDRI drives ambient + reflections. background=false keeps the
