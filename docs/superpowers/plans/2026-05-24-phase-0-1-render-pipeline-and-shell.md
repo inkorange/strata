@@ -493,7 +493,7 @@ Then append the Strata accent tokens at the END of the file (after the `.scene-s
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { Geist } from 'next/font/google'
-import { cn } from '@/src/lib/utils'
+import { cn } from '@/lib/utils'
 import { ServiceWorkerRegister } from './sw-register'
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-sans' })
@@ -2538,7 +2538,7 @@ navigation correctly drives the camera dolly."
 ```tsx
 'use client'
 
-import { cn } from '@/src/lib/utils'
+import { cn } from '@/lib/utils'
 import type { Tier } from '@/src/lib/tier'
 import { useStore } from '@/src/store'
 
