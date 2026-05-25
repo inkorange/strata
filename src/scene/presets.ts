@@ -38,8 +38,8 @@ export const PRESETS: Record<Tier, Preset> = {
   'desktop-ultra': {
     frameloop: 'always',
     shadowMapSize: 2048,
-    dprCap: 2,
-    earth: { segments: 256, cloudSegments: 192, interior: true },
+    dprCap: 1.5,
+    earth: { segments: 256, cloudSegments: 192, interior: false },
     atmosphere: { raymarched: true },
     postFx: { bloom: true, ssao: false, dof: false, vignette: true },
     anisotropy: 16,
