@@ -1,8 +1,8 @@
 'use client'
 
-import { Scene } from '@/src/scene/Scene'
 import { Earth } from '@/src/scene/Earth'
 import { PostProcessing } from '@/src/scene/PostProcessing'
+import { Scene } from '@/src/scene/Scene'
 
 export default function Page() {
   return (

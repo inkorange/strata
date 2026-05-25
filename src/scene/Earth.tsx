@@ -4,13 +4,13 @@ import { useFrame } from '@react-three/fiber'
 import { useRef } from 'react'
 import * as THREE from 'three'
 import { useStore } from '@/src/store'
-import { PRESETS } from './presets'
 import { AtmosphereRim } from './AtmosphereRim'
 import { EarthInterior } from './EarthInterior'
+import { PRESETS } from './presets'
 import { useEarthTextures } from './useEarthTextures'
 
 const SURFACE_ROTATION_RATE = 0.02 // rad/sec
-const CLOUD_ROTATION_RATE = 0.028  // slightly faster — winds aloft
+const CLOUD_ROTATION_RATE = 0.028 // slightly faster — winds aloft
 
 export function Earth() {
   const effectiveTier = useStore((s) => s.effectiveTier())

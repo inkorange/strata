@@ -1,12 +1,6 @@
 'use client'
 
-import {
-  Bloom,
-  DepthOfField,
-  EffectComposer,
-  SSAO,
-  Vignette,
-} from '@react-three/postprocessing'
+import { Bloom, DepthOfField, EffectComposer, SSAO, Vignette } from '@react-three/postprocessing'
 import { useStore } from '@/src/store'
 import { PRESETS } from './presets'
 
