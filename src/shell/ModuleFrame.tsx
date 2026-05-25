@@ -40,7 +40,7 @@ export function ModuleFrame({ module, children }: ModuleFrameProps) {
       <aside
         className="pointer-events-auto absolute z-10 bg-card/60 backdrop-blur
           bottom-0 inset-x-0 max-h-[35dvh] overflow-auto border-t border-border/40
-          sm:bottom-auto sm:inset-y-0 sm:left-0 sm:right-auto sm:w-72 sm:max-h-none
+          sm:bottom-0 sm:top-20 sm:inset-x-auto sm:left-0 sm:right-auto sm:w-72 sm:max-h-none
           sm:border-r sm:border-t-0"
         aria-label="Module controls"
       >
