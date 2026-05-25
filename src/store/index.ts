@@ -7,9 +7,6 @@ type Store = ShellSlice & {
 }
 
 const STORAGE_KEY = 'strata:shell'
-const PERSIST_DEBOUNCE_MS = 1000
-
-let persistTimer: ReturnType<typeof setTimeout> | null = null
 
 function readPersistedShell(): Partial<ShellSlice> {
   if (typeof localStorage === 'undefined') return {}
@@ -45,19 +42,11 @@ export const useStore = create<Store>()((set, get, api) => {
   return {
     ...slice,
     ...rehydrated,
-    __flushPersist: () => {
-      if (persistTimer) clearTimeout(persistTimer)
-      persistTimer = null
-      persistShell(get() as ShellSlice)
-    },
+    __flushPersist: () => persistShell(get() as ShellSlice),
   }
 })
 
-// Debounced persistence: subscribe once at module load.
+// Synchronous persistence: subscribe once at module load.
 useStore.subscribe((state) => {
-  if (persistTimer) clearTimeout(persistTimer)
-  persistTimer = setTimeout(() => {
-    persistShell(state as ShellSlice)
-    persistTimer = null
-  }, PERSIST_DEBOUNCE_MS)
+  persistShell(state as ShellSlice)
 })

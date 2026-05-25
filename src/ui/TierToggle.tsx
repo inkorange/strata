@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 import type { Tier } from '@/src/lib/tier'
 import { useStore } from '@/src/store'
@@ -12,8 +13,15 @@ const OPTIONS: { value: Tier | null; label: string; help: string }[] = [
 ]
 
 export function TierToggle() {
+  const [mounted, setMounted] = useState(false)
   const tierOverride = useStore((s) => s.tierOverride)
   const setTierOverride = useStore((s) => s.setTierOverride)
+
+  // Defer reading the persisted store value until after hydration to avoid
+  // an SSR/client mismatch on aria-checked (server renders null, client
+  // has the rehydrated value).
+  useEffect(() => setMounted(true), [])
+  const displayedOverride = mounted ? tierOverride : null
 
   return (
     <div
@@ -22,7 +30,7 @@ export function TierToggle() {
       className="flex items-center gap-1 rounded-md border border-border/60 bg-card/70 p-0.5 text-xs backdrop-blur"
     >
       {OPTIONS.map((opt) => {
-        const active = (opt.value ?? null) === tierOverride
+        const active = (opt.value ?? null) === displayedOverride
         return (
           // biome-ignore lint/a11y/useSemanticElements: segmented-control pattern; <button role="radio"> inside radiogroup is valid ARIA
           <button
