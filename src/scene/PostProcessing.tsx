@@ -27,7 +27,9 @@ export function PostProcessing() {
   return (
     <EffectComposer multisampling={preset.shadowMapSize > 0 ? 4 : 0}>
       <>
-        {bloom && <Bloom intensity={0.65} luminanceThreshold={0.85} mipmapBlur />}
+        {bloom && (
+          <Bloom intensity={0.55} luminanceThreshold={0.95} luminanceSmoothing={0.05} mipmapBlur />
+        )}
         {ssao && <SSAO radius={0.12} intensity={20} luminanceInfluence={0.6} />}
         {dof && <DepthOfField focusDistance={0.02} focalLength={0.05} bokehScale={2.5} />}
         {vignette && <Vignette eskil={false} offset={0.2} darkness={0.55} />}

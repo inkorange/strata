@@ -41,12 +41,12 @@ export function Earth() {
           metalness={0.05}
           emissiveMap={textures.night}
           emissive={new THREE.Color('#ffd9a0')}
-          emissiveIntensity={1.1}
+          emissiveIntensity={0.7}
         />
       </mesh>
 
       {/* Cloud layer: slightly larger sphere with alpha-from-luminance. */}
-      <mesh ref={cloudRef} scale={1.008}>
+      <mesh ref={cloudRef} scale={1.015}>
         <sphereGeometry args={[1, preset.earth.cloudSegments, preset.earth.cloudSegments]} />
         <meshStandardMaterial
           alphaMap={textures.clouds}

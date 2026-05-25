@@ -46,7 +46,7 @@ interface AtmosphereRimProps {
   radius?: number
 }
 
-export function AtmosphereRim({ radius = 1.025 }: AtmosphereRimProps) {
+export function AtmosphereRim({ radius = 1.06 }: AtmosphereRimProps) {
   const effectiveTier = useStore((s) => s.effectiveTier())
   const preset = PRESETS[effectiveTier]
 
@@ -58,7 +58,7 @@ export function AtmosphereRim({ radius = 1.025 }: AtmosphereRimProps) {
         uSunDirection: { value: new THREE.Vector3(5, 3, 5).normalize() },
         uColorDay: { value: new THREE.Color('#5cc6ff') },
         uColorSunset: { value: new THREE.Color('#ff8c5a') },
-        uIntensity: { value: preset.atmosphere.raymarched ? 1.8 : 1.2 },
+        uIntensity: { value: preset.atmosphere.raymarched ? 0.85 : 0.65 },
       },
       transparent: true,
       side: THREE.BackSide,
