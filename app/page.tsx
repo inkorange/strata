@@ -1,16 +1,5 @@
-'use client'
-
-import { Earth } from '@/src/scene/Earth'
-import { PostProcessing } from '@/src/scene/PostProcessing'
-import { Scene } from '@/src/scene/Scene'
+import { HubPage } from '@/src/shell/HubPage'
 
 export default function Page() {
-  return (
-    <main className="fixed inset-0">
-      <Scene controls>
-        <Earth />
-        <PostProcessing />
-      </Scene>
-    </main>
-  )
+  return <HubPage />
 }
