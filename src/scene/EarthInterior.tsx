@@ -10,6 +10,7 @@ interface ShellProps {
   emissiveIntensity?: number
   roughness?: number
   metalness?: number
+  segments?: number
 }
 
 function Shell({
@@ -19,10 +20,11 @@ function Shell({
   emissiveIntensity = 0,
   roughness = 0.85,
   metalness = 0.05,
+  segments = 64,
 }: ShellProps) {
   return (
     <mesh>
-      <sphereGeometry args={[radius, 64, 64]} />
+      <sphereGeometry args={[radius, segments, segments]} />
       <meshStandardMaterial
         color={color}
         emissive={emissive}

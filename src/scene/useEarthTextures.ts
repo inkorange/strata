@@ -43,6 +43,7 @@ export function useEarthTextures() {
       tex.generateMipmaps = true
       tex.minFilter = THREE.LinearMipMapLinearFilter
       tex.magFilter = THREE.LinearFilter
+      tex.needsUpdate = true
     }
 
     return textures

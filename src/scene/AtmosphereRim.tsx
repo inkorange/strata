@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import * as THREE from 'three'
 import { useStore } from '@/src/store'
 import { PRESETS } from './presets'
@@ -34,7 +34,7 @@ void main() {
 
   // Sun-facing factor: 1 at noon, 0 at night side; warms the rim near terminator.
   float sunDot = clamp(dot(normalize(vNormal), normalize(uSunDirection)), -0.2, 1.0);
-  float terminator = smoothstep(0.0, 0.4, abs(sunDot) - 0.0) * (1.0 - sunDot);
+  float terminator = smoothstep(0.0, 0.4, abs(sunDot)) * (1.0 - sunDot);
 
   vec3 color = mix(uColorDay, uColorSunset, terminator);
   float alpha = fresnel * uIntensity * smoothstep(-0.3, 0.4, sunDot);
@@ -66,6 +66,12 @@ export function AtmosphereRim({ radius = 1.025 }: AtmosphereRimProps) {
       blending: THREE.AdditiveBlending,
     })
   }, [preset.atmosphere.raymarched])
+
+  useEffect(() => {
+    return () => {
+      material.dispose()
+    }
+  }, [material])
 
   return (
     <mesh scale={radius}>
