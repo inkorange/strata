@@ -61,7 +61,7 @@ export function AtmosphereRim({ radius = 1.06 }: AtmosphereRimProps) {
         uIntensity: { value: preset.atmosphere.raymarched ? 0.85 : 0.65 },
       },
       transparent: true,
-      side: THREE.BackSide,
+      side: THREE.FrontSide,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
     })

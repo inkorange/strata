@@ -31,7 +31,7 @@ export function Earth() {
 
       {/* Earth surface: PBR material with day + night emissive blend, normal
        * for terrain relief, roughness so oceans are mirror-shiny. */}
-      <mesh ref={surfaceRef} castShadow receiveShadow>
+      <mesh ref={surfaceRef}>
         <sphereGeometry args={[1, preset.earth.segments, preset.earth.segments]} />
         <meshStandardMaterial
           map={textures.day}
