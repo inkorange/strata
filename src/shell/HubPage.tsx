@@ -1,10 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import { CameraDolly } from '@/src/scene/CameraDolly'
-import { Earth } from '@/src/scene/Earth'
-import { PostProcessing } from '@/src/scene/PostProcessing'
-import { Scene } from '@/src/scene/Scene'
 import { useStore } from '@/src/store'
 import { SiteFooter } from '@/src/ui/SiteFooter'
 import { TierToggle } from '@/src/ui/TierToggle'
@@ -16,15 +12,6 @@ export function HubPage() {
 
   return (
     <main className="relative h-dvh w-dvw overflow-hidden">
-      {/* Full-bleed canvas behind the UI */}
-      <div className="absolute inset-0">
-        <Scene controls={false}>
-          <Earth />
-          <CameraDolly />
-          <PostProcessing />
-        </Scene>
-      </div>
-
       {/* Top bar */}
       <header className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between p-4 sm:p-6">
         <h1 className="pointer-events-auto text-base font-medium tracking-wide text-[#dffaff]">
