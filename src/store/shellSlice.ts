@@ -36,6 +36,5 @@ export const createShellSlice: StateCreator<ShellSlice> = (set, get) => ({
   setTier: (tier) => set({ tier }),
   setTierOverride: (tierOverride) => set({ tierOverride }),
   setActiveModule: (activeModule) => set({ activeModule }),
-  toggleHighContrast: () =>
-    set((state) => ({ highContrast: !state.highContrast })),
+  toggleHighContrast: () => set((state) => ({ highContrast: !state.highContrast })),
 })

@@ -3,9 +3,7 @@ import { PRESETS, type Preset } from './presets'
 
 describe('PRESETS', () => {
   it('defines exactly the three tiers', () => {
-    expect(Object.keys(PRESETS).sort()).toEqual(
-      ['balanced', 'desktop-ultra', 'mobile-lite'].sort(),
-    )
+    expect(Object.keys(PRESETS).sort()).toEqual(['balanced', 'desktop-ultra', 'mobile-lite'].sort())
   })
 
   it('desktop-ultra keeps only vignette in postFx (bloom/ssao/dof disabled for v1 due to flicker)', () => {

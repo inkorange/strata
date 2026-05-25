@@ -50,10 +50,26 @@ export function EarthInterior() {
 
   return (
     <group>
-      <Shell radius={0.985} color="#3a2a1a" roughness={0.95} />            {/* crust */}
-      <Shell radius={0.92} color="#8b3a14" roughness={0.7} />              {/* mantle */}
-      <Shell radius={0.55} color="#ff6a2a" emissive="#ff4a14" emissiveIntensity={0.6} roughness={0.4} metalness={0.6} /> {/* outer core */}
-      <Shell radius={0.30} color="#ffd877" emissive="#ffaa44" emissiveIntensity={1.4} roughness={0.25} metalness={0.85} /> {/* inner core */}
+      <Shell radius={0.985} color="#3a2a1a" roughness={0.95} /> {/* crust */}
+      <Shell radius={0.92} color="#8b3a14" roughness={0.7} /> {/* mantle */}
+      <Shell
+        radius={0.55}
+        color="#ff6a2a"
+        emissive="#ff4a14"
+        emissiveIntensity={0.6}
+        roughness={0.4}
+        metalness={0.6}
+      />{' '}
+      {/* outer core */}
+      <Shell
+        radius={0.3}
+        color="#ffd877"
+        emissive="#ffaa44"
+        emissiveIntensity={1.4}
+        roughness={0.25}
+        metalness={0.85}
+      />{' '}
+      {/* inner core */}
     </group>
   )
 }

@@ -1,11 +1,11 @@
 'use client'
 
-import { Canvas } from '@react-three/fiber'
 import { Environment, OrbitControls, PerspectiveCamera } from '@react-three/drei'
-import { useEffect, useMemo, type ReactNode } from 'react'
+import { Canvas } from '@react-three/fiber'
+import { type ReactNode, useEffect, useMemo } from 'react'
 import * as THREE from 'three'
-import { useStore } from '@/src/store'
 import { detectTier } from '@/src/lib/tier'
+import { useStore } from '@/src/store'
 import { PRESETS } from './presets'
 import { Starfield } from './Starfield'
 

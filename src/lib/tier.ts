@@ -20,7 +20,7 @@ export function detectTier(): Tier {
   const cores = nav?.hardwareConcurrency ?? 0
   // deviceMemory is a non-standard but widely-shipped hint (Chrome, Edge).
   // Missing in Safari/Firefox; treat absence as "unknown -> balanced".
-  const mem = (nav as Navigator & { deviceMemory?: number } | undefined)?.deviceMemory ?? 0
+  const mem = (nav as (Navigator & { deviceMemory?: number }) | undefined)?.deviceMemory ?? 0
 
   if (cores >= 8 && mem >= 8) return 'desktop-ultra'
   return 'balanced'
