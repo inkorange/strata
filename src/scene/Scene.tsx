@@ -50,7 +50,7 @@ export function Scene({ children, controls = true }: SceneProps) {
 
       {/* IBL: HDRI drives ambient + reflections. background=false keeps the
        * deep-space color as the canvas backdrop instead of showing the HDRI. */}
-      <Environment files={preset.hdriPath} background={false} environmentIntensity={0.35} />
+      <Environment files={preset.hdriPath} background={false} environmentIntensity={0.55} />
 
       {/* Key sun: directional light, casts shadows on capable tiers.
        * Positioned to backlight the Earth from upper-left for a strong
@@ -62,7 +62,7 @@ export function Scene({ children, controls = true }: SceneProps) {
         shadow-mapSize={[preset.shadowMapSize || 1024, preset.shadowMapSize || 1024]}
         shadow-bias={-0.0005}
       />
-      <ambientLight intensity={0.15} />
+      <ambientLight intensity={0.3} />
 
       <Starfield />
 

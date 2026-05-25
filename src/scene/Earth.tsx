@@ -31,7 +31,7 @@ export function Earth() {
 
       {/* Earth surface: PBR material with day + night emissive blend, normal
        * for terrain relief, roughness so oceans are mirror-shiny. */}
-      <mesh ref={surfaceRef} castShadow receiveShadow>
+      <mesh ref={surfaceRef}>
         <sphereGeometry args={[1, preset.earth.segments, preset.earth.segments]} />
         <meshStandardMaterial
           map={textures.day}
@@ -41,12 +41,12 @@ export function Earth() {
           metalness={0.05}
           emissiveMap={textures.night}
           emissive={new THREE.Color('#ffd9a0')}
-          emissiveIntensity={1.1}
+          emissiveIntensity={1.0}
         />
       </mesh>
 
       {/* Cloud layer: slightly larger sphere with alpha-from-luminance. */}
-      <mesh ref={cloudRef} scale={1.008}>
+      <mesh ref={cloudRef} scale={1.015}>
         <sphereGeometry args={[1, preset.earth.cloudSegments, preset.earth.cloudSegments]} />
         <meshStandardMaterial
           alphaMap={textures.clouds}

@@ -37,7 +37,10 @@ void main() {
   float terminator = smoothstep(0.0, 0.4, abs(sunDot)) * (1.0 - sunDot);
 
   vec3 color = mix(uColorDay, uColorSunset, terminator);
-  float alpha = fresnel * uIntensity * smoothstep(-0.3, 0.4, sunDot);
+  // Restrict to the silhouette ring: smoothstep gates out anywhere fresnel < ~0.4
+  // so the rim's color doesn't bleed across the entire visible disc.
+  float rim = smoothstep(0.35, 0.85, fresnel);
+  float alpha = rim * uIntensity * smoothstep(-0.3, 0.4, sunDot);
   gl_FragColor = vec4(color, alpha);
 }
 `
@@ -46,7 +49,7 @@ interface AtmosphereRimProps {
   radius?: number
 }
 
-export function AtmosphereRim({ radius = 1.025 }: AtmosphereRimProps) {
+export function AtmosphereRim({ radius = 1.06 }: AtmosphereRimProps) {
   const effectiveTier = useStore((s) => s.effectiveTier())
   const preset = PRESETS[effectiveTier]
 
@@ -58,10 +61,10 @@ export function AtmosphereRim({ radius = 1.025 }: AtmosphereRimProps) {
         uSunDirection: { value: new THREE.Vector3(5, 3, 5).normalize() },
         uColorDay: { value: new THREE.Color('#5cc6ff') },
         uColorSunset: { value: new THREE.Color('#ff8c5a') },
-        uIntensity: { value: preset.atmosphere.raymarched ? 1.8 : 1.2 },
+        uIntensity: { value: preset.atmosphere.raymarched ? 0.85 : 0.65 },
       },
       transparent: true,
-      side: THREE.BackSide,
+      side: THREE.FrontSide,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
     })
