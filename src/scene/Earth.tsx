@@ -16,6 +16,8 @@ export function Earth() {
   const effectiveTier = useStore((s) => s.effectiveTier())
   const preset = PRESETS[effectiveTier]
   const textures = useEarthTextures()
+  const activeModule = useStore((s) => s.activeModule)
+  const showEarthSurface = activeModule !== 'tectonics'
 
   return (
     <group>
@@ -23,7 +25,7 @@ export function Earth() {
 
       {/* Earth surface: PBR material with day + night emissive blend, normal
        * for terrain relief, roughness so oceans are mirror-shiny. */}
-      <mesh>
+      <mesh visible={showEarthSurface}>
         <sphereGeometry args={[1, preset.earth.segments, preset.earth.segments]} />
         <meshStandardMaterial
           map={textures.day}
@@ -38,7 +40,7 @@ export function Earth() {
       </mesh>
 
       {/* Cloud layer: slightly larger sphere with alpha-from-luminance. */}
-      <mesh scale={1.015}>
+      <mesh scale={1.015} visible={showEarthSurface}>
         <sphereGeometry args={[1, preset.earth.cloudSegments, preset.earth.cloudSegments]} />
         <meshStandardMaterial
           alphaMap={textures.clouds}

@@ -3,7 +3,7 @@
 import * as THREE from 'three'
 import { useStore } from '@/src/store'
 
-const OCEAN_RADIUS = 1.0005 // just above the Earth surface (1.0); hides the photoreal textures
+const OCEAN_RADIUS = 1.0 // Earth surface is hidden in Tectonics mode; this takes its place
 
 /**
  * Dark ocean sphere overlay rendered only when activeModule === 'tectonics'.

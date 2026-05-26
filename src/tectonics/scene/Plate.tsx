@@ -5,8 +5,8 @@ import { useMemo } from 'react'
 import * as THREE from 'three'
 import { latLngToVec3, slerpOnSphere, triangulatePolygonFan } from '../sphericalGeometry'
 
-const FILL_RADIUS = 1.002 // sits above the TectonicsOcean at 1.0005
-const OUTLINE_RADIUS = 1.006 // sits above the fill so the line shows above the mesh
+const FILL_RADIUS = 1.005 // clear separation above the ocean sphere at 1.0
+const OUTLINE_RADIUS = 1.012 // clearly above the fill, makes the outline pop
 const SEGMENTS_PER_EDGE = 12
 const SUBDIVISION_LEVELS = 4 // recursive triangle subdivision so plate interiors stay on the sphere
 
