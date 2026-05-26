@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ERAS, type Era, type PlateAtEra, type PlateId } from './eras'
+import { type ContinentId, ERAS, type Era, type PlateAtEra, type PlateId } from './eras'
 
 const REQUIRED_PLATE_IDS: ReadonlyArray<PlateId> = [
   'pacific',
@@ -64,6 +64,50 @@ describe('ERAS', () => {
     for (const era of ERAS) {
       for (const plate of era.plates) {
         for (const [lat, lng] of plate.vertices) {
+          expect(lat).toBeGreaterThanOrEqual(-90)
+          expect(lat).toBeLessThanOrEqual(90)
+          expect(lng).toBeGreaterThanOrEqual(-180)
+          expect(lng).toBeLessThanOrEqual(180)
+        }
+      }
+    }
+  })
+})
+
+const REQUIRED_CONTINENT_IDS: ReadonlyArray<ContinentId> = [
+  'north-america',
+  'south-america',
+  'eurasia',
+  'africa',
+  'india',
+  'australia',
+  'antarctica',
+]
+
+describe('ERAS continents', () => {
+  it.each(REQUIRED_ERA_IDS)('era %s has all seven continents', (eraId) => {
+    const era = ERAS.find((e) => e.id === eraId)
+    expect(era).toBeDefined()
+    if (!era) return
+    const continentIds = era.continents.map((c) => c.id).sort()
+    expect(continentIds).toEqual([...REQUIRED_CONTINENT_IDS].sort())
+  })
+
+  it.each(
+    REQUIRED_CONTINENT_IDS,
+  )('continent %s has consistent vertex count across eras', (continentId) => {
+    const counts = ERAS.map(
+      (era) => era.continents.find((c) => c.id === continentId)?.vertices.length ?? 0,
+    )
+    const first = counts[0]
+    expect(counts.every((c) => c === first)).toBe(true)
+    expect(first).toBeGreaterThanOrEqual(6)
+  })
+
+  it('every continent vertex has valid lat/lng range', () => {
+    for (const era of ERAS) {
+      for (const continent of era.continents) {
+        for (const [lat, lng] of continent.vertices) {
           expect(lat).toBeGreaterThanOrEqual(-90)
           expect(lat).toBeLessThanOrEqual(90)
           expect(lng).toBeGreaterThanOrEqual(-180)
