@@ -90,16 +90,33 @@ describe('triangulatePolygonFan', () => {
     expect(indices.length).toBe(12)
   })
 
-  it('places the centroid as position index 0', () => {
+  it('projects the centroid back to the sphere surface (same radius as vertices)', () => {
+    // Three unit-sphere points; mean is (0, 1/3, 0), which normalized gives
+    // (0, 1, 0) at radius 1.
     const vertices = [
       new THREE.Vector3(1, 0, 0),
       new THREE.Vector3(0, 1, 0),
       new THREE.Vector3(-1, 0, 0),
     ]
     const { positions } = triangulatePolygonFan(vertices)
-    // Centroid of (1,0,0), (0,1,0), (-1,0,0) is (0, 1/3, 0).
     expect(positions[0]).toBeCloseTo(0, 5)
-    expect(positions[1]).toBeCloseTo(1 / 3, 5)
+    expect(positions[1]).toBeCloseTo(1, 5)
     expect(positions[2]).toBeCloseTo(0, 5)
+  })
+
+  it('preserves the input radius for the projected centroid', () => {
+    // Three points on a sphere of radius 1.001 - centroid should also be at 1.001.
+    const r = 1.001
+    const vertices = [
+      new THREE.Vector3(r, 0, 0),
+      new THREE.Vector3(0, r, 0),
+      new THREE.Vector3(-r, 0, 0),
+    ]
+    const { positions } = triangulatePolygonFan(vertices)
+    // positions is a Float32Array; slice gives a plain number[]-like array
+    // avoiding noisy non-null-assertion lint warnings on typed array index access.
+    const [cx = 0, cy = 0, cz = 0] = positions
+    const centroidLength = Math.sqrt(cx * cx + cy * cy + cz * cz)
+    expect(centroidLength).toBeCloseTo(r, 5)
   })
 })

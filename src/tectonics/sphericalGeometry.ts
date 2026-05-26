@@ -70,10 +70,18 @@ export function triangulatePolygonFan(verticesVec3: ReadonlyArray<THREE.Vector3>
 } {
   const n = verticesVec3.length
 
-  // Centroid = average of vertices (good enough for near-convex polygons).
+  // Centroid: arithmetic mean projected back to the sphere surface.
+  // Plain (A+B+C)/3 on a sphere lies INSIDE the sphere; for large polygons
+  // this places the centroid near the sphere center, and the fan
+  // triangulation cuts through the sphere's interior. Normalizing back to
+  // the vertex radius keeps every triangle vertex on the same surface.
   const centroid = new THREE.Vector3()
   for (const v of verticesVec3) centroid.add(v)
   centroid.divideScalar(n)
+  const targetRadius = (verticesVec3[0] ?? new THREE.Vector3(1, 0, 0)).length()
+  if (centroid.lengthSq() > 1e-12) {
+    centroid.normalize().multiplyScalar(targetRadius)
+  }
 
   // Positions: centroid first, then all n vertices. Total = n + 1 positions.
   const positions = new Float32Array((n + 1) * 3)
