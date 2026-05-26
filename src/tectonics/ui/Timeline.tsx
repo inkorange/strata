@@ -1,9 +1,19 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
+import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
 import { useStore } from '@/src/store'
 import { ERAS, type Era } from '../eras'
+
+/** Returns true on the client, false during SSR — without an extra render cycle. */
+function useIsClient(): boolean {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  )
+}
 
 const MIN_MYA = -50 // Future projection (rightmost on timeline)
 const MAX_MYA = 250 // Pangaea (leftmost on timeline)
@@ -24,13 +34,17 @@ export function Timeline() {
   const startPlaythrough = useStore((s) => s.startPlaythrough)
   const stopPlaythrough = useStore((s) => s.stopPlaythrough)
 
+  // isClient is true on the first client render (no extra effect cycle needed).
+  const isClient = useIsClient()
+
   // Mount guard so the active marker doesn't mismatch on hydration.
+  // Still needed for displayedEraId — store value may differ from SSR default.
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
 
   const displayedEraId = mounted ? (targetEraId ?? currentEraId) : 'present'
 
-  return (
+  const content = (
     <div className="pointer-events-auto fixed z-20 bottom-4 inset-x-4 sm:left-80 sm:right-4 flex items-center gap-3 rounded-lg border border-border/40 bg-card/85 px-4 py-3 backdrop-blur">
       {/* Play / Stop button */}
       <button
@@ -81,4 +95,7 @@ export function Timeline() {
       </div>
     </div>
   )
+
+  if (!isClient) return null
+  return createPortal(content, document.body)
 }
