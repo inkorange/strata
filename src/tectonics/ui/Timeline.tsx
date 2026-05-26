@@ -51,30 +51,31 @@ export function Timeline() {
           const x = eraXPosition(era)
           const isActive = era.id === displayedEraId
           return (
-            <button
+            <div
               key={era.id}
-              type="button"
-              onClick={() => setTargetEra(era.id)}
-              title={`${era.name}${era.mya > 0 ? ` (${era.mya} Mya)` : era.mya === 0 ? '' : ` (+${-era.mya} Myr)`}`}
-              aria-label={era.name}
-              className={cn(
-                'absolute top-1/2 -translate-x-1/2 -translate-y-1/2',
-                'flex flex-col items-center gap-1',
-              )}
+              className="pointer-events-none absolute top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-1"
               style={{ left: `${x * 100}%` }}
             >
-              <span
-                className={cn(
-                  'block h-3 w-3 rounded-full border',
-                  isActive
-                    ? 'bg-foreground border-foreground shadow-[0_0_8px_rgba(255,255,255,0.6)]'
-                    : 'bg-card border-foreground/60 hover:bg-foreground/20',
-                )}
-              />
-              <span className="text-[10px] uppercase tracking-wider text-foreground/70 whitespace-nowrap">
+              <button
+                type="button"
+                onClick={() => setTargetEra(era.id)}
+                title={`${era.name}${era.mya > 0 ? ` (${era.mya} Mya)` : era.mya === 0 ? '' : ` (+${-era.mya} Myr)`}`}
+                aria-label={era.name}
+                className="pointer-events-auto block h-3 w-3"
+              >
+                <span
+                  className={cn(
+                    'pointer-events-none block h-3 w-3 rounded-full border',
+                    isActive
+                      ? 'bg-foreground border-foreground shadow-[0_0_8px_rgba(255,255,255,0.6)]'
+                      : 'bg-card border-foreground/60 hover:bg-foreground/20',
+                  )}
+                />
+              </button>
+              <span className="pointer-events-none text-[10px] uppercase tracking-wider text-foreground/70 whitespace-nowrap">
                 {era.name}
               </span>
-            </button>
+            </div>
           )
         })}
       </div>

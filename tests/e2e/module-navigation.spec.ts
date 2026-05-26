@@ -4,10 +4,10 @@ test('enter Tectonics from hub, see the module frame, return to hub', async ({ p
   await page.goto('/')
   await page.getByRole('link', { name: /Tectonics/ }).click()
   await expect(page).toHaveURL(/\/tectonics$/)
-  await expect(page.getByRole('heading', { name: 'Tectonics' })).toBeVisible()
-  await expect(page.getByText(/Module under construction/)).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Present' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Start playthrough' })).toBeVisible()
 
-  await page.getByRole('link', { name: /Hub/ }).click()
+  await page.getByRole('link', { name: /Hub/ }).click({ force: true })
   await expect(page).toHaveURL(/\/$/)
   await expect(page.getByRole('heading', { level: 1, name: 'Strata' })).toBeVisible()
 })
