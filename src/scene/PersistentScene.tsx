@@ -15,7 +15,7 @@ import { Scene } from './Scene'
 export function PersistentScene() {
   return (
     <div className="fixed inset-0 -z-10">
-      <Scene controls={false}>
+      <Scene controls={true}>
         <Earth />
         <CameraDolly />
         <PostProcessing />

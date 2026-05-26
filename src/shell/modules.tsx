@@ -37,7 +37,7 @@ export const MODULES: Record<Exclude<ModuleId, 'hub'>, ModuleDef> = {
     accentToken: '--color-accent-tectonics',
     accentHex: '#ff8c5a',
     // Dolly into the crust: camera dives toward the surface from current orbit.
-    dolly: { position: [0, 0, 1.6], lookAt: [0, 0, 0] },
+    dolly: { position: [0, 0, 3], lookAt: [0, 0, 0] },
     Body: TectonicsBody,
   },
   atmosphere: {

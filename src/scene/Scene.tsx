@@ -87,6 +87,7 @@ export function Scene({ children, controls = true }: SceneProps) {
 
       {controls && (
         <OrbitControls
+          makeDefault
           enablePan={false}
           enableZoom
           minDistance={2.5}
