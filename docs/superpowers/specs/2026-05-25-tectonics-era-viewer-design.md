@@ -426,6 +426,7 @@ These belong in follow-up PRs, not this one:
 - **Time scrubbing between eras.** Only discrete era selection is supported; no continuous slider. (A continuous slider could be added later by interpolating between adjacent eras based on slider position.)
 - **Era data accuracy.** Plate positions are simplified curations, not academic-grade reconstructions. Future PRs may refine the data or source it from a paleogeographic library.
 - **Camera-tracking-plate.** No "follow the Indian Plate as it collides with Asia" feature. The camera stays fixed at the current dolly position throughout.
+- **Plate boundary complexity.** Each plate is authored with 6 vertices, which combined with subdivision produces a recognizable but blob-like shape (smoothed hexagon). A follow-up PR will re-author plates with 12–16 vertices each (~630 lat/lng pairs across all eras) for more recognizable continental outlines. Visual baseline for v1: distinct, colored, on-surface, animated between eras — not pixel-accurate continental outlines.
 
 ---
 
