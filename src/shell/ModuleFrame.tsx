@@ -17,7 +17,7 @@ interface ModuleFrameProps {
 
 export function ModuleFrame({ module, children }: ModuleFrameProps) {
   return (
-    <main className="relative h-dvh w-dvw overflow-hidden">
+    <main className="pointer-events-none relative h-dvh w-dvw overflow-hidden">
       <ClientShellInit module={module} />
 
       <header className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between p-4 sm:p-6">

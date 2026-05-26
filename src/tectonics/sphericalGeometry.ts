@@ -53,28 +53,36 @@ export function slerpOnSphere(a: THREE.Vector3, b: THREE.Vector3, t: number): TH
 
 /**
  * Triangulates a convex (or near-convex) polygon as a triangle fan from the
- * polygon's centroid.
+ * polygon's centroid, then optionally subdivides each triangle recursively
+ * to reduce chord-plane sag on a sphere.
+ *
+ * On a sphere, a flat triangle with vertices on the surface bows INWARD —
+ * the triangle interior sits on the chord plane, which dips inside the
+ * sphere by R(1 - cos(angle/2)) where angle is the angular span between
+ * vertices at the sphere center. For large polygons (Pacific spans 150°+)
+ * the sag dominates the radial buffer between the plate and the Earth
+ * surface and the plate interior gets occluded.
+ *
+ * Each subdivision level splits every triangle into 4 by inserting
+ * midpoints (projected back to the sphere) on each edge, reducing the
+ * remaining angular span (and thus chord-plane sag) by ~4x per level.
  *
  * Returns:
- *   positions: Float32Array of (centroid, v0, v1, ..., vN) as flat [x,y,z,...]
- *   indices:   Uint32Array of triangle indices forming N triangles
- *              (centroid, vI, v[I+1]) for I = 0..N-1 (wrapping)
+ *   positions: Float32Array of [x,y,z,...] for all unique vertices
+ *   indices:   Uint32Array of triangle indices into positions
  *
- * Limitations: only correct for convex polygons. Our hand-authored plate
- * polygons are simplified to be near-convex; if a polygon is wildly concave
- * the rendered shape may include overlapping triangles.
+ * Limitations: only correct for convex polygons (fan triangulation
+ * assumption). Subdivision preserves the polygon's outer boundary; only
+ * interior triangles get denser.
  */
-export function triangulatePolygonFan(verticesVec3: ReadonlyArray<THREE.Vector3>): {
-  positions: Float32Array
-  indices: Uint32Array
-} {
+export function triangulatePolygonFan(
+  verticesVec3: ReadonlyArray<THREE.Vector3>,
+  subdivisions = 0,
+): { positions: Float32Array; indices: Uint32Array } {
   const n = verticesVec3.length
 
-  // Centroid: arithmetic mean projected back to the sphere surface.
-  // Plain (A+B+C)/3 on a sphere lies INSIDE the sphere; for large polygons
-  // this places the centroid near the sphere center, and the fan
-  // triangulation cuts through the sphere's interior. Normalizing back to
-  // the vertex radius keeps every triangle vertex on the same surface.
+  // Centroid: arithmetic mean projected back to the sphere surface so all
+  // initial triangle vertices lie at the same radius.
   const centroid = new THREE.Vector3()
   for (const v of verticesVec3) centroid.add(v)
   centroid.divideScalar(n)
@@ -83,25 +91,85 @@ export function triangulatePolygonFan(verticesVec3: ReadonlyArray<THREE.Vector3>
     centroid.normalize().multiplyScalar(targetRadius)
   }
 
-  // Positions: centroid first, then all n vertices. Total = n + 1 positions.
-  const positions = new Float32Array((n + 1) * 3)
-  positions[0] = centroid.x
-  positions[1] = centroid.y
-  positions[2] = centroid.z
+  // Initial fan: [centroid, v0, v1, ..., vN-1] positions; one triangle per
+  // perimeter edge (centroid, vI, v[I+1 mod N]).
+  let positions: THREE.Vector3[] = [centroid, ...verticesVec3.map((v) => v.clone())]
+  let indices: number[] = []
   for (let i = 0; i < n; i++) {
-    const v = verticesVec3[i] as THREE.Vector3
-    positions[(i + 1) * 3 + 0] = v.x
-    positions[(i + 1) * 3 + 1] = v.y
-    positions[(i + 1) * 3 + 2] = v.z
+    indices.push(0, 1 + i, 1 + ((i + 1) % n))
   }
 
-  // Indices: n triangles, each (centroid=0, vI=1+i, v[I+1]=1+((i+1) % n)).
-  const indices = new Uint32Array(n * 3)
-  for (let i = 0; i < n; i++) {
-    indices[i * 3 + 0] = 0
-    indices[i * 3 + 1] = 1 + i
-    indices[i * 3 + 2] = 1 + ((i + 1) % n)
+  for (let level = 0; level < subdivisions; level++) {
+    const next = subdivideTriangles(positions, indices, targetRadius)
+    positions = next.positions
+    indices = next.indices
   }
 
-  return { positions, indices }
+  // Flatten to typed arrays.
+  const flatPositions = new Float32Array(positions.length * 3)
+  for (let i = 0; i < positions.length; i++) {
+    const p = positions[i] as THREE.Vector3
+    flatPositions[i * 3 + 0] = p.x
+    flatPositions[i * 3 + 1] = p.y
+    flatPositions[i * 3 + 2] = p.z
+  }
+  return {
+    positions: flatPositions,
+    indices: new Uint32Array(indices),
+  }
+}
+
+/**
+ * One pass of triangle subdivision. Each triangle [a, b, c] becomes 4:
+ *   [a, ab, ca], [b, bc, ab], [c, ca, bc], [ab, bc, ca]
+ * where ab/bc/ca are the edge midpoints, projected to the sphere at the
+ * given radius. A shared edge-midpoint cache prevents duplicate vertices
+ * between adjacent triangles.
+ */
+function subdivideTriangles(
+  positions: ReadonlyArray<THREE.Vector3>,
+  indices: ReadonlyArray<number>,
+  radius: number,
+): { positions: THREE.Vector3[]; indices: number[] } {
+  const newPositions: THREE.Vector3[] = positions.map((p) => p.clone())
+  const newIndices: number[] = []
+  const edgeCache = new Map<string, number>()
+
+  function midpointIndex(ia: number, ib: number): number {
+    const key = ia < ib ? `${ia}_${ib}` : `${ib}_${ia}`
+    const cached = edgeCache.get(key)
+    if (cached !== undefined) return cached
+
+    const a = positions[ia] as THREE.Vector3
+    const b = positions[ib] as THREE.Vector3
+    const mid = new THREE.Vector3().addVectors(a, b).multiplyScalar(0.5)
+    if (mid.lengthSq() > 1e-12) {
+      mid.normalize().multiplyScalar(radius)
+    } else {
+      // Antipodal midpoint: pick an arbitrary perpendicular direction.
+      const perp = new THREE.Vector3(1, 0, 0)
+      if (Math.abs(a.x / radius) > 0.9) perp.set(0, 1, 0)
+      mid.copy(perp).normalize().multiplyScalar(radius)
+    }
+    const idx = newPositions.length
+    newPositions.push(mid)
+    edgeCache.set(key, idx)
+    return idx
+  }
+
+  for (let t = 0; t < indices.length; t += 3) {
+    const a = indices[t] as number
+    const b = indices[t + 1] as number
+    const c = indices[t + 2] as number
+    const ab = midpointIndex(a, b)
+    const bc = midpointIndex(b, c)
+    const ca = midpointIndex(c, a)
+    // 4 sub-triangles
+    newIndices.push(a, ab, ca)
+    newIndices.push(b, bc, ab)
+    newIndices.push(c, ca, bc)
+    newIndices.push(ab, bc, ca)
+  }
+
+  return { positions: newPositions, indices: newIndices }
 }

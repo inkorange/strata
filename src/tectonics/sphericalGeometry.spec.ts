@@ -120,3 +120,41 @@ describe('triangulatePolygonFan', () => {
     expect(centroidLength).toBeCloseTo(r, 5)
   })
 })
+
+describe('triangulatePolygonFan with subdivisions', () => {
+  it('adds subdivided triangles: 4^N times more triangles per fan triangle', () => {
+    // A square polygon → 4 initial fan triangles.
+    const vertices = [
+      new THREE.Vector3(1, 0, 1).normalize(),
+      new THREE.Vector3(-1, 0, 1).normalize(),
+      new THREE.Vector3(-1, 0, -1).normalize(),
+      new THREE.Vector3(1, 0, -1).normalize(),
+    ]
+    const { indices: i0 } = triangulatePolygonFan(vertices, 0)
+    const { indices: i1 } = triangulatePolygonFan(vertices, 1)
+    const { indices: i2 } = triangulatePolygonFan(vertices, 2)
+
+    expect(i0.length / 3).toBe(4) // 4 fan triangles
+    expect(i1.length / 3).toBe(4 * 4) // 16 after one subdivision
+    expect(i2.length / 3).toBe(4 * 16) // 64 after two subdivisions
+  })
+
+  it('keeps all subdivided vertices on the sphere surface (within float tolerance)', () => {
+    const r = 1.001
+    const vertices = [
+      new THREE.Vector3(r, 0, 0),
+      new THREE.Vector3(0, r, 0),
+      new THREE.Vector3(0, 0, r),
+      new THREE.Vector3(-r, 0, 0),
+    ]
+    const { positions } = triangulatePolygonFan(vertices, 3)
+    // Every vertex should have length ≈ r.
+    for (let i = 0; i < positions.length / 3; i++) {
+      const x = positions[i * 3] as number
+      const y = positions[i * 3 + 1] as number
+      const z = positions[i * 3 + 2] as number
+      const len = Math.sqrt(x * x + y * y + z * z)
+      expect(len).toBeCloseTo(r, 4)
+    }
+  })
+})
