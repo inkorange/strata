@@ -2,35 +2,51 @@
 
 import { Line } from '@react-three/drei'
 import { useMemo } from 'react'
-import type * as THREE from 'three'
-import { latLngToVec3, slerpOnSphere } from '../sphericalGeometry'
+import * as THREE from 'three'
+import { latLngToVec3, slerpOnSphere, triangulatePolygonFan } from '../sphericalGeometry'
 
-const OUTLINE_RADIUS = 1.005 // sit slightly above the Earth surface (1.0) — no z-fighting
-const SEGMENTS_PER_EDGE = 12 // smoothness of each edge's great-circle arc
+const FILL_RADIUS = 1.002 // sits above the TectonicsOcean at 1.0005
+const OUTLINE_RADIUS = 1.006 // sits above the fill so the line shows above the mesh
+const SEGMENTS_PER_EDGE = 12
+const SUBDIVISION_LEVELS = 4 // recursive triangle subdivision so plate interiors stay on the sphere
 
 interface PlateProps {
   /** Plate vertices as [lat, lng] degree pairs. */
   vertices: ReadonlyArray<readonly [number, number]>
+  /** Plate's display color (used for fill; outline is rendered slightly darker). */
   color: string
 }
 
 /**
- * Renders a single plate as a closed great-circle outline on the sphere
- * surface. Each consecutive pair of boundary vertices is connected via a
- * SLERP-sampled arc of SEGMENTS_PER_EDGE segments, so the outline follows
- * the sphere's curvature instead of cutting chords through the interior.
+ * Renders a single plate as TWO things on the sphere:
+ *   1. A filled subdivided mesh at FILL_RADIUS (the "landmass" of the plate)
+ *   2. A closed great-circle outline at OUTLINE_RADIUS (the plate boundary)
  *
- * Uses drei's <Line> (MeshLine-backed) so width is real screen pixels
- * regardless of camera distance. Three.js's built-in line geometry caps
- * at 1px which is invisible on a 3D sphere.
+ * The fill uses the plate's color (land plates: warm tones; Pacific: ocean
+ * blue; Antarctic: pale ice). 4-level recursive triangle subdivision keeps
+ * the fill interior on the sphere surface (avoids chord-plane sag dipping
+ * inside the Earth).
+ *
+ * The outline uses a darker shade of the plate's color so the boundary
+ * reads clearly against the fill.
  */
 export function Plate({ vertices, color }: PlateProps) {
-  const points = useMemo<THREE.Vector3[]>(() => {
-    if (vertices.length === 0) return []
-    // Convert each boundary vertex to a UNIT vec3 first; slerpOnSphere
-    // expects unit-sphere inputs. We scale to OUTLINE_RADIUS after.
-    const unitVerts = vertices.map(([lat, lng]) => latLngToVec3(lat, lng, 1))
+  // Filled landmass mesh
+  const fillGeometry = useMemo(() => {
+    if (vertices.length === 0) return null
+    const vec3s = vertices.map(([lat, lng]) => latLngToVec3(lat, lng, FILL_RADIUS))
+    const { positions, indices } = triangulatePolygonFan(vec3s, SUBDIVISION_LEVELS)
+    const geom = new THREE.BufferGeometry()
+    geom.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+    geom.setIndex(new THREE.BufferAttribute(indices, 1))
+    geom.computeVertexNormals()
+    return geom
+  }, [vertices])
 
+  // Outline points (great-circle interpolated, on the sphere surface)
+  const outlinePoints = useMemo<THREE.Vector3[]>(() => {
+    if (vertices.length === 0) return []
+    const unitVerts = vertices.map(([lat, lng]) => latLngToVec3(lat, lng, 1))
     const pts: THREE.Vector3[] = []
     for (let i = 0; i < unitVerts.length; i++) {
       const a = unitVerts[i] as THREE.Vector3
@@ -42,13 +58,35 @@ export function Plate({ vertices, color }: PlateProps) {
         pts.push(p)
       }
     }
-    // Close the loop by repeating the first point.
     const first = pts[0]
     if (first) pts.push(first.clone())
     return pts
   }, [vertices])
 
-  if (points.length === 0) return null
+  // Outline color: darker variant of fill color for boundary contrast.
+  const outlineColor = useMemo(() => {
+    const c = new THREE.Color(color)
+    c.multiplyScalar(0.45) // darken for clear boundary visibility
+    return `#${c.getHexString()}`
+  }, [color])
 
-  return <Line points={points} color={color} lineWidth={2.5} transparent opacity={0.95} />
+  if (!fillGeometry || outlinePoints.length === 0) return null
+
+  return (
+    <>
+      {/* Filled landmass */}
+      <mesh geometry={fillGeometry}>
+        <meshStandardMaterial
+          color={color}
+          metalness={0.05}
+          roughness={0.9}
+          emissive={new THREE.Color(color)}
+          emissiveIntensity={0.12}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+      {/* Outline boundary on top */}
+      <Line points={outlinePoints} color={outlineColor} lineWidth={2} transparent opacity={0.9} />
+    </>
+  )
 }
