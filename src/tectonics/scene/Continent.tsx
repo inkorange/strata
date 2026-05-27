@@ -31,9 +31,22 @@ export function Continent({ polygons, color }: ContinentProps) {
         const geom = new THREE.BufferGeometry()
         geom.setAttribute('position', new THREE.BufferAttribute(positions, 3))
         geom.setIndex(new THREE.BufferAttribute(indices, 1))
-        geom.computeVertexNormals()
-        // Use vertex count + piece index as stable key — piece ordering is fixed
-        // by the data pipeline (largest piece first) and never reorders at runtime.
+        // Radial outward normals. Every vertex sits on the sphere, so its
+        // outward direction is its own normalized position. computeVertexNormals
+        // would average face normals at shared vertices, which makes the
+        // fan-triangulation edges show up as visible facet lines under the
+        // directional light — the artifact reported as "lines showing through".
+        const normals = new Float32Array(positions.length)
+        for (let v = 0; v < positions.length; v += 3) {
+          const x = positions[v] ?? 0
+          const y = positions[v + 1] ?? 0
+          const z = positions[v + 2] ?? 0
+          const len = Math.hypot(x, y, z) || 1
+          normals[v] = x / len
+          normals[v + 1] = y / len
+          normals[v + 2] = z / len
+        }
+        geom.setAttribute('normal', new THREE.BufferAttribute(normals, 3))
         return { geom, key: `p${i}-v${piece.length}` }
       })
   }, [polygons])
@@ -48,9 +61,6 @@ export function Continent({ polygons, color }: ContinentProps) {
             color={color}
             metalness={0.05}
             roughness={0.95}
-            emissive={new THREE.Color(color)}
-            emissiveIntensity={0.08}
-            side={THREE.DoubleSide}
           />
         </mesh>
       ))}

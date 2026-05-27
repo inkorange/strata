@@ -39,14 +39,17 @@ export function Earth() {
         />
       </mesh>
 
-      {/* Cloud layer: slightly larger sphere with alpha-from-luminance. */}
-      <mesh scale={1.015} visible={showEarthSurface}>
+      {/* Cloud layer: slightly larger sphere with alpha-from-luminance.
+       * Stays visible in tectonics mode for atmospheric realism — clouds
+       * don't carry continent shapes, so they don't conflict with the
+       * paleogeographic polygons rendered on top. */}
+      <mesh scale={1.015}>
         <sphereGeometry args={[1, preset.earth.cloudSegments, preset.earth.cloudSegments]} />
         <meshStandardMaterial
           alphaMap={textures.clouds}
           color="#ffffff"
           transparent
-          opacity={0.85}
+          opacity={activeModule === 'tectonics' ? 0.55 : 0.85}
           depthWrite={false}
         />
       </mesh>
