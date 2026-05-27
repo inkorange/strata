@@ -11,7 +11,7 @@ export function HubPage() {
   const setActiveModule = useStore((s) => s.setActiveModule)
 
   return (
-    <main className="relative h-dvh w-dvw overflow-hidden">
+    <main className="pointer-events-none relative h-dvh w-dvw overflow-hidden">
       {/* Top bar */}
       <header className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between p-4 sm:p-6">
         <h1 className="pointer-events-auto text-base font-medium tracking-wide text-[#dffaff]">

@@ -1,5 +1,7 @@
 'use client'
 
+import { Plates } from '@/src/tectonics/scene/Plates'
+import { TectonicsOcean } from '@/src/tectonics/scene/TectonicsOcean'
 import { CameraDolly } from './CameraDolly'
 import { Earth } from './Earth'
 import { PostProcessing } from './PostProcessing'
@@ -13,11 +15,13 @@ import { Scene } from './Scene'
  */
 export function PersistentScene() {
   return (
-    <div className="fixed inset-0 -z-10">
-      <Scene controls={false}>
+    <div className="fixed inset-0">
+      <Scene controls={true}>
         <Earth />
         <CameraDolly />
         <PostProcessing />
+        <TectonicsOcean />
+        <Plates />
       </Scene>
     </div>
   )

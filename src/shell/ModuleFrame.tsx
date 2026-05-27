@@ -17,7 +17,7 @@ interface ModuleFrameProps {
 
 export function ModuleFrame({ module, children }: ModuleFrameProps) {
   return (
-    <main className="relative h-dvh w-dvw overflow-hidden">
+    <main className="pointer-events-none relative h-dvh w-dvw overflow-hidden">
       <ClientShellInit module={module} />
 
       <header className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between p-4 sm:p-6">
@@ -39,7 +39,7 @@ export function ModuleFrame({ module, children }: ModuleFrameProps) {
        * module's controls will land here once the simulation engine is wired. */}
       <aside
         className="pointer-events-auto absolute z-10 bg-card/60 backdrop-blur
-          bottom-0 inset-x-0 max-h-[35dvh] overflow-auto border-t border-border/40
+          bottom-0 inset-x-0 max-h-[45dvh] overflow-auto border-t border-border/40
           sm:top-20 sm:inset-x-auto sm:left-0 sm:right-auto sm:w-72 sm:h-auto sm:max-h-[70dvh]
           sm:border-r sm:border-t-0"
         aria-label="Module controls"

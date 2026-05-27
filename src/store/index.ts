@@ -1,10 +1,12 @@
 import { create } from 'zustand'
+import { createTectonicsSlice, type TectonicsSlice } from '@/src/tectonics/tectonicsSlice'
 import { createShellSlice, type ShellSlice } from './shellSlice'
 
-type Store = ShellSlice & {
-  /** Test-only helper: flush the persist debounce synchronously. */
-  __flushPersist?: () => void
-}
+type Store = ShellSlice &
+  TectonicsSlice & {
+    /** Test-only helper: flush the persist debounce synchronously. */
+    __flushPersist?: () => void
+  }
 
 const STORAGE_KEY = 'strata:shell'
 
@@ -36,11 +38,13 @@ function persistShell(state: ShellSlice) {
 }
 
 export const useStore = create<Store>()((set, get, api) => {
-  const slice = createShellSlice(set, get, api)
+  const shellSlicePart = createShellSlice(set, get, api)
+  const tectonicsSlicePart = createTectonicsSlice(set, get, api)
   const rehydrated = readPersistedShell()
 
   return {
-    ...slice,
+    ...shellSlicePart,
+    ...tectonicsSlicePart,
     ...rehydrated,
     __flushPersist: () => persistShell(get() as ShellSlice),
   }

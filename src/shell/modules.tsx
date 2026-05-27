@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react'
 import type { ModuleId } from '@/src/store/shellSlice'
+import { TectonicsBody } from '@/src/tectonics/ui/TectonicsBody'
 import { StubModuleBody } from './StubModuleBody'
 
 export interface ModuleDef {
@@ -36,8 +37,8 @@ export const MODULES: Record<Exclude<ModuleId, 'hub'>, ModuleDef> = {
     accentToken: '--color-accent-tectonics',
     accentHex: '#ff8c5a',
     // Dolly into the crust: camera dives toward the surface from current orbit.
-    dolly: { position: [0, 0, 1.6], lookAt: [0, 0, 0] },
-    Body: makeStub('Tectonics', '#ff8c5a'),
+    dolly: { position: [0, 0, 3], lookAt: [0, 0, 0] },
+    Body: TectonicsBody,
   },
   atmosphere: {
     id: 'atmosphere',

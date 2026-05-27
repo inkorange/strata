@@ -8,17 +8,28 @@ import { useStore } from '@/src/store'
 
 const DURATION_MS = 1100
 
+interface ControlsLike {
+  enabled: boolean
+  target: THREE.Vector3
+  update: () => void
+}
+
 /**
- * Tweens the camera position + lookAt to the active module's dolly target
- * (or HUB_DOLLY when activeModule is 'hub'). Eased with smoothstep.
+ * Tweens the camera position + lookAt (and OrbitControls target) to the
+ * active module's dolly target (or HUB_DOLLY when activeModule is 'hub').
+ * Eased with smoothstep.
  *
- * Mount inside the Canvas. Reads activeModule from the store; whenever
- * it changes, it captures the current camera state as the tween source
- * and runs for DURATION_MS.
+ * During a tween, OrbitControls is disabled so its per-frame update
+ * doesn't fight the position lerping. When the tween completes, controls
+ * are re-enabled and synced to the camera's final state so user-driven
+ * orbit continues from the correct angle.
  */
 export function CameraDolly() {
   const activeModule = useStore((s) => s.activeModule)
-  const { camera } = useThree()
+  const { camera, controls } = useThree() as {
+    camera: THREE.PerspectiveCamera | THREE.OrthographicCamera
+    controls: ControlsLike | null
+  }
 
   const startTimeRef = useRef<number | null>(null)
   const startPosRef = useRef(new THREE.Vector3())
@@ -33,12 +44,18 @@ export function CameraDolly() {
     endTargetRef.current.set(...dolly.lookAt)
 
     startPosRef.current.copy(camera.position)
-    // Current lookAt point: camera direction projected forward. Using the
-    // origin as a stand-in works because OrbitControls always targets it.
-    startTargetRef.current.set(0, 0, 0)
+    // Use the controls' current target as the start lookAt so user-rotated
+    // state is preserved as the source. Falls back to origin if controls
+    // aren't mounted yet.
+    if (controls?.target) {
+      startTargetRef.current.copy(controls.target)
+      controls.enabled = false
+    } else {
+      startTargetRef.current.set(0, 0, 0)
+    }
 
     startTimeRef.current = performance.now()
-  }, [activeModule, camera])
+  }, [activeModule, camera, controls])
 
   useFrame(() => {
     const start = startTimeRef.current
@@ -49,14 +66,26 @@ export function CameraDolly() {
     const eased = t * t * (3 - 2 * t) // smoothstep
 
     camera.position.lerpVectors(startPosRef.current, endPosRef.current, eased)
+
+    // Tween the controls target alongside the camera; if no controls,
+    // just call camera.lookAt with the interpolated target.
     const target = new THREE.Vector3().lerpVectors(
       startTargetRef.current,
       endTargetRef.current,
       eased,
     )
+    if (controls?.target) {
+      controls.target.copy(target)
+    }
     camera.lookAt(target)
 
-    if (t >= 1) startTimeRef.current = null
+    if (t >= 1) {
+      startTimeRef.current = null
+      if (controls) {
+        controls.enabled = true
+        controls.update()
+      }
+    }
   })
 
   return null

@@ -1,9 +1,6 @@
 'use client'
 
-import { useFrame } from '@react-three/fiber'
-import { useRef } from 'react'
 import * as THREE from 'three'
-import { usePrefersReducedMotion } from '@/src/lib/accessibility'
 import { useStore } from '@/src/store'
 import { EarthInterior } from './EarthInterior'
 import { PRESETS } from './presets'
@@ -15,23 +12,12 @@ import { useEarthTextures } from './useEarthTextures'
 // without flicker. The component file in ./AtmosphereRim.tsx is kept
 // intact so the eventual fix can re-enable it without re-implementing.
 
-const SURFACE_ROTATION_RATE = 0.02 // rad/sec
-const CLOUD_ROTATION_RATE = 0.028 // slightly faster — winds aloft
-
 export function Earth() {
   const effectiveTier = useStore((s) => s.effectiveTier())
   const preset = PRESETS[effectiveTier]
   const textures = useEarthTextures()
-  const prefersReducedMotion = usePrefersReducedMotion()
-
-  const surfaceRef = useRef<THREE.Mesh>(null)
-  const cloudRef = useRef<THREE.Mesh>(null)
-
-  useFrame((_, delta) => {
-    if (prefersReducedMotion) return
-    if (surfaceRef.current) surfaceRef.current.rotation.y += SURFACE_ROTATION_RATE * delta
-    if (cloudRef.current) cloudRef.current.rotation.y += CLOUD_ROTATION_RATE * delta
-  })
+  const activeModule = useStore((s) => s.activeModule)
+  const showEarthSurface = activeModule !== 'tectonics'
 
   return (
     <group>
@@ -39,7 +25,7 @@ export function Earth() {
 
       {/* Earth surface: PBR material with day + night emissive blend, normal
        * for terrain relief, roughness so oceans are mirror-shiny. */}
-      <mesh ref={surfaceRef}>
+      <mesh visible={showEarthSurface}>
         <sphereGeometry args={[1, preset.earth.segments, preset.earth.segments]} />
         <meshStandardMaterial
           map={textures.day}
@@ -53,14 +39,17 @@ export function Earth() {
         />
       </mesh>
 
-      {/* Cloud layer: slightly larger sphere with alpha-from-luminance. */}
-      <mesh ref={cloudRef} scale={1.015}>
+      {/* Cloud layer: slightly larger sphere with alpha-from-luminance.
+       * Stays visible in tectonics mode for atmospheric realism — clouds
+       * don't carry continent shapes, so they don't conflict with the
+       * paleogeographic polygons rendered on top. */}
+      <mesh scale={1.015}>
         <sphereGeometry args={[1, preset.earth.cloudSegments, preset.earth.cloudSegments]} />
         <meshStandardMaterial
           alphaMap={textures.clouds}
           color="#ffffff"
           transparent
-          opacity={0.85}
+          opacity={activeModule === 'tectonics' ? 0.55 : 0.85}
           depthWrite={false}
         />
       </mesh>

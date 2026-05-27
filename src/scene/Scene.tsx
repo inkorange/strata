@@ -87,11 +87,13 @@ export function Scene({ children, controls = true }: SceneProps) {
 
       {controls && (
         <OrbitControls
+          makeDefault
           enablePan={false}
           enableZoom
           minDistance={2.5}
           maxDistance={12}
-          autoRotate={false}
+          autoRotate
+          autoRotateSpeed={0.4}
         />
       )}
     </Canvas>
