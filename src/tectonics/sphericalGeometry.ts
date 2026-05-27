@@ -131,6 +131,85 @@ export function triangulatePolygonFan(
 }
 
 /**
+ * Concave-safe triangulation of a polygon defined by (lat, lng) vertices,
+ * projected onto a sphere of given radius. Uses three.js's ShapeUtils
+ * (earcut under the hood) on a 2D projection so concavities — peninsulas,
+ * fjords, the indented coastlines of real countries — don't produce the
+ * star/spike artifacts a centroid fan generates for non-star-shaped
+ * polygons.
+ *
+ * Projection: vertices are mapped to 2D by treating (lng, lat) as planar
+ * coordinates. Earcut only needs topological correctness, so metric
+ * distortion is fine for polygons that don't straddle the poles or wrap
+ * the date line (which Natural Earth country polygons don't — antimeridian-
+ * crossing landmasses are split into separate pieces in the source data).
+ *
+ * After earcut yields triangles in vertex-index space, every vertex is
+ * promoted to its 3D position on the sphere and the triangles are
+ * subdivided to reduce chord-plane sag the same way triangulatePolygonFan
+ * does — splitting each triangle into 4 per level and projecting new
+ * midpoints back to the sphere.
+ *
+ * Returns:
+ *   positions: Float32Array of [x,y,z,...] vertex positions on the sphere
+ *   indices:   Uint32Array of triangle indices
+ *
+ * If earcut fails to produce any triangles (degenerate input, self-
+ * intersecting ring) the function returns empty arrays so the caller can
+ * skip rendering that piece without crashing.
+ */
+export function triangulatePolygonOnSphere(
+  latLngVertices: ReadonlyArray<readonly [number, number]>,
+  radius: number,
+  subdivisions = 0,
+): { positions: Float32Array; indices: Uint32Array } {
+  const n = latLngVertices.length
+  if (n < 3) return { positions: new Float32Array(0), indices: new Uint32Array(0) }
+
+  // 2D projection for earcut: just use (lng, lat). Earcut works on planar
+  // topology; the actual 3D positions go on the sphere below.
+  const contour2D: THREE.Vector2[] = []
+  for (let i = 0; i < n; i++) {
+    const v = latLngVertices[i]
+    if (!v) continue
+    const [lat, lng] = v
+    contour2D.push(new THREE.Vector2(lng, lat))
+  }
+
+  const faces = THREE.ShapeUtils.triangulateShape(contour2D, [])
+  if (faces.length === 0) {
+    return { positions: new Float32Array(0), indices: new Uint32Array(0) }
+  }
+
+  let positions: THREE.Vector3[] = latLngVertices.map(([lat, lng]) =>
+    latLngToVec3(lat, lng, radius),
+  )
+  let indices: number[] = []
+  for (const tri of faces) {
+    const [a, b, c] = tri as [number, number, number]
+    indices.push(a, b, c)
+  }
+
+  for (let level = 0; level < subdivisions; level++) {
+    const next = subdivideTriangles(positions, indices, radius)
+    positions = next.positions
+    indices = next.indices
+  }
+
+  const flatPositions = new Float32Array(positions.length * 3)
+  for (let i = 0; i < positions.length; i++) {
+    const p = positions[i] as THREE.Vector3
+    flatPositions[i * 3 + 0] = p.x
+    flatPositions[i * 3 + 1] = p.y
+    flatPositions[i * 3 + 2] = p.z
+  }
+  return {
+    positions: flatPositions,
+    indices: new Uint32Array(indices),
+  }
+}
+
+/**
  * One pass of triangle subdivision. Each triangle [a, b, c] becomes 4:
  *   [a, ab, ca], [b, bc, ab], [c, ca, bc], [ab, bc, ca]
  * where ab/bc/ca are the edge midpoints, projected to the sphere at the

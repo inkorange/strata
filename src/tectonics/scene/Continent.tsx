@@ -2,10 +2,14 @@
 
 import { useMemo } from 'react'
 import * as THREE from 'three'
-import { latLngToVec3, triangulatePolygonFan } from '../sphericalGeometry'
+import { triangulatePolygonOnSphere } from '../sphericalGeometry'
 
 const CONTINENT_RADIUS = 1.003
-const SUBDIVISION_LEVELS = 3
+// Subdivision levels for chord-plane sag reduction. 2 is enough for the
+// post-earcut triangle sizes coming out of country-scale polygons (~5-15°
+// edges); the previous fan triangulation needed 3 because it had much
+// larger initial triangles spanning from the centroid.
+const SUBDIVISION_LEVELS = 2
 
 interface ContinentProps {
   polygons: ReadonlyArray<ReadonlyArray<readonly [number, number]>>
@@ -26,16 +30,20 @@ export function Continent({ polygons, color }: ContinentProps) {
     return polygons
       .filter((p) => p.length >= 3)
       .map((piece, i) => {
-        const vec3s = piece.map(([lat, lng]) => latLngToVec3(lat, lng, CONTINENT_RADIUS))
-        const { positions, indices } = triangulatePolygonFan(vec3s, SUBDIVISION_LEVELS)
+        const { positions, indices } = triangulatePolygonOnSphere(
+          piece,
+          CONTINENT_RADIUS,
+          SUBDIVISION_LEVELS,
+        )
+        if (indices.length === 0) return null
         const geom = new THREE.BufferGeometry()
         geom.setAttribute('position', new THREE.BufferAttribute(positions, 3))
         geom.setIndex(new THREE.BufferAttribute(indices, 1))
         // Radial outward normals. Every vertex sits on the sphere, so its
         // outward direction is its own normalized position. computeVertexNormals
         // would average face normals at shared vertices, which makes the
-        // fan-triangulation edges show up as visible facet lines under the
-        // directional light — the artifact reported as "lines showing through".
+        // triangulation edges show up as visible facet lines under the
+        // directional light.
         const normals = new Float32Array(positions.length)
         for (let v = 0; v < positions.length; v += 3) {
           const x = positions[v] ?? 0
@@ -49,6 +57,7 @@ export function Continent({ polygons, color }: ContinentProps) {
         geom.setAttribute('normal', new THREE.BufferAttribute(normals, 3))
         return { geom, key: `p${i}-v${piece.length}` }
       })
+      .filter((p): p is { geom: THREE.BufferGeometry; key: string } => p !== null)
   }, [polygons])
 
   if (pieces.length === 0) return null
