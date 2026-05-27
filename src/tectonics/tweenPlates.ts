@@ -42,10 +42,14 @@ export function tweenPlates(source: Era, target: Era, t: number): ReadonlyArray<
       const vb = latLngToVec3(tlat, tlng, 1)
       const vi = slerpOnSphere(va, vb, t)
 
-      // Convert interpolated vec3 back to (lat, lng) degrees.
-      // lat = asin(y); lng = atan2(z, x).
+      // Convert interpolated vec3 back to (lat, lng) degrees. Must be the
+      // exact inverse of latLngToVec3, which negates z, so the lng inverse
+      // is atan2(-z, x) — not atan2(z, x). Using the wrong sign here makes
+      // tweens snap to a longitude-mirrored pose on the first frame of
+      // animation because the SLERP→lat/lng→vec3 roundtrip in the renderer
+      // produces a position far from the source.
       const lat = (Math.asin(THREE.MathUtils.clamp(vi.y, -1, 1)) * 180) / Math.PI
-      const lng = (Math.atan2(vi.z, vi.x) * 180) / Math.PI
+      const lng = (Math.atan2(-vi.z, vi.x) * 180) / Math.PI
       interpolated.push([lat, lng] as const)
     }
 
@@ -108,7 +112,7 @@ export function tweenContinents(
         const vi = slerpOnSphere(va, vb, t)
 
         const lat = (Math.asin(THREE.MathUtils.clamp(vi.y, -1, 1)) * 180) / Math.PI
-        const lng = (Math.atan2(vi.z, vi.x) * 180) / Math.PI
+        const lng = (Math.atan2(-vi.z, vi.x) * 180) / Math.PI
         piece.push([lat, lng] as const)
       }
       interpolatedPolys.push(piece)
