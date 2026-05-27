@@ -26,8 +26,13 @@ describe('latLngToVec3', () => {
     approxEqualVec(v, new THREE.Vector3(0, -1, 0))
   })
 
-  it('maps (0, 90) to (0, 0, radius)', () => {
+  it('maps (0, 90) to (0, 0, -radius) — 90°E lies on -Z (clockwise from +Y)', () => {
     const v = latLngToVec3(0, 90, 1)
+    approxEqualVec(v, new THREE.Vector3(0, 0, -1))
+  })
+
+  it('maps (0, -90) to (0, 0, radius) — 90°W lies on +Z', () => {
+    const v = latLngToVec3(0, -90, 1)
     approxEqualVec(v, new THREE.Vector3(0, 0, 1))
   })
 

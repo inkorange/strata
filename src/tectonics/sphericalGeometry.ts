@@ -2,13 +2,24 @@ import * as THREE from 'three'
 
 /**
  * Converts a (lat, lng) degree pair to a 3D Cartesian point on a sphere of
- * given radius. Uses the convention:
- *   (lat=0, lng=0)   -> (radius, 0, 0)
- *   (lat=90, *)      -> (0, radius, 0)   (north pole, +Y axis)
- *   (lat=0, lng=90)  -> (0, 0, radius)   (+Z axis)
+ * given radius, matching three.js's default SphereGeometry UV mapping for
+ * an equirectangular Earth texture (lng=-180 at u=0, lng=0 at u=0.5).
  *
- * This matches three.js's default Y-up orientation; the Earth mesh in the
- * scene uses the same convention.
+ * three.js SphereGeometry generates vertices with x = -r·cos(u·2π)·sin(v·π)
+ * and z = r·sin(u·2π)·sin(v·π), which after the texture's lng→u mapping
+ * works out to:
+ *   x =  r · cos(lat) · cos(lng)
+ *   y =  r · sin(lat)
+ *   z = -r · cos(lat) · sin(lng)
+ *
+ * The Z is negated relative to the naïve spherical formula because longitude
+ * increases CLOCKWISE when viewed from the north pole (standard cartographic
+ * convention), while a +sin(theta) Z would put it counter-clockwise.
+ *
+ *   (lat=0,  lng=0)   -> ( radius, 0, 0)       (prime meridian, +X)
+ *   (lat=90, *)       -> (0, radius, 0)        (north pole, +Y)
+ *   (lat=0,  lng=90)  -> (0, 0, -radius)       (90°E, -Z)
+ *   (lat=0,  lng=-90) -> (0, 0,  radius)       (90°W, +Z)
  */
 export function latLngToVec3(lat: number, lng: number, radius: number): THREE.Vector3 {
   const phi = (lat * Math.PI) / 180
@@ -17,7 +28,7 @@ export function latLngToVec3(lat: number, lng: number, radius: number): THREE.Ve
   return new THREE.Vector3(
     radius * cosPhi * Math.cos(theta),
     radius * Math.sin(phi),
-    radius * cosPhi * Math.sin(theta),
+    -radius * cosPhi * Math.sin(theta),
   )
 }
 
