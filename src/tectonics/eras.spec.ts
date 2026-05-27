@@ -95,23 +95,30 @@ describe('ERAS continents', () => {
 
   it.each(
     REQUIRED_CONTINENT_IDS,
-  )('continent %s has consistent vertex count across eras', (continentId) => {
-    const counts = ERAS.map(
-      (era) => era.continents.find((c) => c.id === continentId)?.vertices.length ?? 0,
-    )
-    const first = counts[0]
-    expect(counts.every((c) => c === first)).toBe(true)
-    expect(first).toBeGreaterThanOrEqual(6)
+  )('continent %s has consistent piece count + per-piece vertex counts across eras', (continentId) => {
+    // For each era, get the shape: [piece0VertCount, piece1VertCount, ...]
+    const pieceShapes = ERAS.map((era) => {
+      const cont = era.continents.find((c) => c.id === continentId)
+      return cont ? cont.polygons.map((p) => p.length) : []
+    })
+    const first = pieceShapes[0]
+    if (!first) return
+    expect(first.length).toBeGreaterThan(0)
+    for (const shape of pieceShapes) {
+      expect(shape).toEqual(first)
+    }
   })
 
   it('every continent vertex has valid lat/lng range', () => {
     for (const era of ERAS) {
       for (const continent of era.continents) {
-        for (const [lat, lng] of continent.vertices) {
-          expect(lat).toBeGreaterThanOrEqual(-90)
-          expect(lat).toBeLessThanOrEqual(90)
-          expect(lng).toBeGreaterThanOrEqual(-180)
-          expect(lng).toBeLessThanOrEqual(180)
+        for (const piece of continent.polygons) {
+          for (const [lat, lng] of piece) {
+            expect(lat).toBeGreaterThanOrEqual(-90)
+            expect(lat).toBeLessThanOrEqual(90)
+            expect(lng).toBeGreaterThanOrEqual(-180)
+            expect(lng).toBeLessThanOrEqual(180)
+          }
         }
       }
     }

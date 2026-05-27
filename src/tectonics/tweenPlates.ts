@@ -57,13 +57,17 @@ export function tweenPlates(source: Era, target: Era, t: number): ReadonlyArray<
 
 export interface TweenedContinent {
   id: ContinentId
-  vertices: ReadonlyArray<readonly [number, number]>
+  polygons: ReadonlyArray<ReadonlyArray<readonly [number, number]>>
 }
 
 /**
  * Interpolates continent positions between two eras at progress t in [0, 1].
  *
- * Mirrors tweenPlates exactly but operates on the continents arrays.
+ * Each continent carries multiple polygon pieces (mainland + islands). Each
+ * piece is SLERP'd vertex-by-vertex. Piece count and per-piece vertex counts
+ * must match between source and target (enforced at data level since all eras
+ * share the same Present-derived multipolygon shape).
+ *
  * At t=0 returns source continents verbatim; at t=1 returns target verbatim.
  */
 export function tweenContinents(
@@ -78,29 +82,39 @@ export function tweenContinents(
     if (!targetContinent) continue
 
     if (t <= 0) {
-      result.push({ id: sourceContinent.id, vertices: sourceContinent.vertices })
+      result.push({ id: sourceContinent.id, polygons: sourceContinent.polygons })
       continue
     }
     if (t >= 1) {
-      result.push({ id: sourceContinent.id, vertices: targetContinent.vertices })
+      result.push({ id: sourceContinent.id, polygons: targetContinent.polygons })
       continue
     }
 
-    const interpolated: Array<readonly [number, number]> = []
-    for (let i = 0; i < sourceContinent.vertices.length; i++) {
-      const [slat, slng] = sourceContinent.vertices[i] as [number, number]
-      const [tlat, tlng] = targetContinent.vertices[i] as [number, number]
+    const interpolatedPolys: Array<ReadonlyArray<readonly [number, number]>> = []
+    for (let p = 0; p < sourceContinent.polygons.length; p++) {
+      const sourcePiece = sourceContinent.polygons[p] as ReadonlyArray<readonly [number, number]>
+      const targetPiece = targetContinent.polygons[p] as
+        | ReadonlyArray<readonly [number, number]>
+        | undefined
+      if (!targetPiece) continue
 
-      const va = latLngToVec3(slat, slng, 1)
-      const vb = latLngToVec3(tlat, tlng, 1)
-      const vi = slerpOnSphere(va, vb, t)
+      const piece: Array<readonly [number, number]> = []
+      for (let i = 0; i < sourcePiece.length; i++) {
+        const [slat, slng] = sourcePiece[i] as [number, number]
+        const [tlat, tlng] = targetPiece[i] as [number, number]
 
-      const lat = (Math.asin(THREE.MathUtils.clamp(vi.y, -1, 1)) * 180) / Math.PI
-      const lng = (Math.atan2(vi.z, vi.x) * 180) / Math.PI
-      interpolated.push([lat, lng] as const)
+        const va = latLngToVec3(slat, slng, 1)
+        const vb = latLngToVec3(tlat, tlng, 1)
+        const vi = slerpOnSphere(va, vb, t)
+
+        const lat = (Math.asin(THREE.MathUtils.clamp(vi.y, -1, 1)) * 180) / Math.PI
+        const lng = (Math.atan2(vi.z, vi.x) * 180) / Math.PI
+        piece.push([lat, lng] as const)
+      }
+      interpolatedPolys.push(piece)
     }
 
-    result.push({ id: sourceContinent.id, vertices: interpolated })
+    result.push({ id: sourceContinent.id, polygons: interpolatedPolys })
   }
 
   return result

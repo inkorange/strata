@@ -77,7 +77,7 @@ export function Plates() {
   return (
     <group>
       {tweenedContinents.map((continent) => (
-        <Continent key={continent.id} vertices={continent.vertices} color={CONTINENT_COLOR} />
+        <Continent key={continent.id} polygons={continent.polygons} color={CONTINENT_COLOR} />
       ))}
       {tweenedPlates.map((plate) => (
         <Plate key={plate.id} vertices={plate.vertices} color={PLATE_COLORS[plate.id as PlateId]} />
