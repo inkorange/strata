@@ -166,24 +166,44 @@ export function triangulatePolygonOnSphere(
   const n = latLngVertices.length
   if (n < 3) return { positions: new Float32Array(0), indices: new Uint32Array(0) }
 
-  // 2D projection for earcut: just use (lng, lat). Earcut works on planar
-  // topology; the actual 3D positions go on the sphere below.
-  const contour2D: THREE.Vector2[] = []
-  for (let i = 0; i < n; i++) {
-    const v = latLngVertices[i]
-    if (!v) continue
-    const [lat, lng] = v
-    contour2D.push(new THREE.Vector2(lng, lat))
+  // Project to a tangent plane centered on the polygon's 3D centroid. Raw
+  // (lng, lat) projection breaks at the antimeridian seam and near the poles
+  // because the lng coordinate wraps — a polygon rotated into northern Asia
+  // can have vertices at lng=+179 and lng=-179 that are physically adjacent
+  // on the sphere but look like opposite ends of the 2D plane. Tangent-plane
+  // projection is local to the polygon's own location, so seam/pole problems
+  // disappear regardless of the polygon's orientation.
+  const vec3s: THREE.Vector3[] = latLngVertices.map(([lat, lng]) =>
+    latLngToVec3(lat, lng, radius),
+  )
+
+  // Centroid: arithmetic mean of vertices, normalized to the sphere surface.
+  const centroidVec = new THREE.Vector3()
+  for (const v of vec3s) centroidVec.add(v)
+  if (centroidVec.lengthSq() < 1e-12) {
+    return { positions: new Float32Array(0), indices: new Uint32Array(0) }
   }
+  centroidVec.normalize()
+
+  // Tangent-plane basis. uAxis is any unit vector perpendicular to the
+  // centroid normal; vAxis is centroid × uAxis. Picking world-up as a
+  // reference fails when the centroid is near the pole, so fall back to
+  // world-right in that case.
+  const ref =
+    Math.abs(centroidVec.y) < 0.9 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0)
+  const uAxis = new THREE.Vector3().crossVectors(ref, centroidVec).normalize()
+  const vAxis = new THREE.Vector3().crossVectors(centroidVec, uAxis).normalize()
+
+  const contour2D: THREE.Vector2[] = vec3s.map(
+    (v) => new THREE.Vector2(v.dot(uAxis), v.dot(vAxis)),
+  )
 
   const faces = THREE.ShapeUtils.triangulateShape(contour2D, [])
   if (faces.length === 0) {
     return { positions: new Float32Array(0), indices: new Uint32Array(0) }
   }
 
-  let positions: THREE.Vector3[] = latLngVertices.map(([lat, lng]) =>
-    latLngToVec3(lat, lng, radius),
-  )
+  let positions: THREE.Vector3[] = vec3s.map((v) => v.clone())
   let indices: number[] = []
   for (const tri of faces) {
     const [a, b, c] = tri as [number, number, number]
