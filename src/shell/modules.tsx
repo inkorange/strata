@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react'
 import type { ModuleId } from '@/src/store/shellSlice'
+import { AtmosphereBody } from '@/src/atmos/ui/AtmosphereBody'
 import { TectonicsBody } from '@/src/tectonics/ui/TectonicsBody'
 import { StubModuleBody } from './StubModuleBody'
 
@@ -49,7 +50,7 @@ export const MODULES: Record<Exclude<ModuleId, 'hub'>, ModuleDef> = {
     accentHex: '#5cc6ff',
     // Pull back to the sky layer: a higher orbit gives a horizon view.
     dolly: { position: [0, 0.6, 2.4], lookAt: [0, 0, 0] },
-    Body: makeStub('Atmosphere', '#5cc6ff'),
+    Body: AtmosphereBody,
   },
   systems: {
     id: 'systems',
