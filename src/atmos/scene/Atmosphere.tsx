@@ -4,6 +4,7 @@ import { useStore } from '@/src/store'
 import { Cells } from './Cells'
 import { CloudBand } from './CloudBand'
 import { Heatmap } from './Heatmap'
+import { HoverInspector } from './HoverInspector'
 import { Sun } from './Sun'
 
 export function Atmosphere() {
@@ -16,6 +17,7 @@ export function Atmosphere() {
       <Heatmap />
       <Cells />
       <CloudBand />
+      <HoverInspector />
     </group>
   )
 }
