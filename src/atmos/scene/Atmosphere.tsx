@@ -2,6 +2,7 @@
 
 import { useStore } from '@/src/store'
 import { Cells } from './Cells'
+import { CloudBand } from './CloudBand'
 import { Heatmap } from './Heatmap'
 import { Sun } from './Sun'
 
@@ -14,6 +15,7 @@ export function Atmosphere() {
       <Sun />
       <Heatmap />
       <Cells />
+      <CloudBand />
     </group>
   )
 }
