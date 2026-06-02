@@ -140,6 +140,12 @@ describe('vec3ToLatLng', () => {
     expect(lat).toBeCloseTo(90, 5)
   })
 
+  it('inverts at the south pole regardless of input lng', () => {
+    const v = latLngToVec3(-90, -17, 1)
+    const [lat] = vec3ToLatLng(v)
+    expect(lat).toBeCloseTo(-90, 5)
+  })
+
   it('inverts at 90°E', () => {
     const v = latLngToVec3(0, 90, 1)
     const [lat, lng] = vec3ToLatLng(v)
