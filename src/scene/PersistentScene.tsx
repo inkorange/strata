@@ -1,5 +1,6 @@
 'use client'
 
+import { Atmosphere } from '@/src/atmos/scene/Atmosphere'
 import { Plates } from '@/src/tectonics/scene/Plates'
 import { TectonicsOcean } from '@/src/tectonics/scene/TectonicsOcean'
 import { CameraDolly } from './CameraDolly'
@@ -22,6 +23,7 @@ export function PersistentScene() {
         <PostProcessing />
         <TectonicsOcean />
         <Plates />
+        <Atmosphere />
       </Scene>
     </div>
   )
