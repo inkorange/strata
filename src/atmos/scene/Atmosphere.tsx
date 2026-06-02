@@ -1,6 +1,7 @@
 'use client'
 
 import { useStore } from '@/src/store'
+import { Heatmap } from './Heatmap'
 import { Sun } from './Sun'
 
 export function Atmosphere() {
@@ -10,6 +11,7 @@ export function Atmosphere() {
   return (
     <group>
       <Sun />
+      <Heatmap />
     </group>
   )
 }
