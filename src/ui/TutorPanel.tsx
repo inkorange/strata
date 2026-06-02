@@ -12,8 +12,10 @@ const SUGGESTED_PROMPTS: Record<string, string[]> = {
     'What will this look like in 10 million years?',
   ],
   atmosphere: [
-    'Why does it rain in front of a cold front?',
-    'What’s the difference between humidity and dew point?',
+    'Why do trade winds curve westward?',
+    "What's the ITCZ?",
+    'Why is the equator warmer than the poles?',
+    'What drives the Hadley cell?',
   ],
   systems: [
     'Where does carbon go when a forest burns?',
