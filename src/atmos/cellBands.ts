@@ -1,0 +1,123 @@
+import * as THREE from 'three'
+import { latLngToVec3 } from '@/src/tectonics/sphericalGeometry'
+
+export interface CellBand {
+  id: 'polar-n' | 'westerly-n' | 'trade-n' | 'trade-s' | 'westerly-s' | 'polar-s'
+  latDeg: number
+  belt: 'trade' | 'westerly' | 'polar'
+  /** Total arrows around the full latitude ring. ~half are on the visible
+   *  front of the globe from any single camera angle. */
+  arrowsAroundRing: 4 | 6 | 8
+  /** Per-arrow canonical shape in surface-tangent local coords (degrees
+   *  along-band and perp-to-band). Curves at trade latitudes pull the
+   *  perimeter end toward the equator; westerly + polar shapes are
+   *  effectively straight along the band. */
+  shape: {
+    /** Longitudinal span of the arrow along the band, in degrees. */
+    arcDeg: number
+    /** Latitudinal pull at the arrow's end, in degrees toward the equator
+     *  (positive value bends the arrow's terminus equatorward). */
+    equatorPullDeg: number
+  }
+}
+
+export const CELL_BANDS: ReadonlyArray<CellBand> = Object.freeze([
+  // North hemisphere
+  {
+    id: 'polar-n',
+    latDeg: 75,
+    belt: 'polar',
+    arrowsAroundRing: 4,
+    shape: { arcDeg: 24, equatorPullDeg: 0 },
+  },
+  {
+    id: 'westerly-n',
+    latDeg: 45,
+    belt: 'westerly',
+    arrowsAroundRing: 6,
+    shape: { arcDeg: 28, equatorPullDeg: 0 },
+  },
+  {
+    id: 'trade-n',
+    latDeg: 15,
+    belt: 'trade',
+    arrowsAroundRing: 8,
+    shape: { arcDeg: 22, equatorPullDeg: 6 },
+  },
+  // South hemisphere (mirror)
+  {
+    id: 'trade-s',
+    latDeg: -15,
+    belt: 'trade',
+    arrowsAroundRing: 8,
+    shape: { arcDeg: 22, equatorPullDeg: 6 },
+  },
+  {
+    id: 'westerly-s',
+    latDeg: -45,
+    belt: 'westerly',
+    arrowsAroundRing: 6,
+    shape: { arcDeg: 28, equatorPullDeg: 0 },
+  },
+  {
+    id: 'polar-s',
+    latDeg: -75,
+    belt: 'polar',
+    arrowsAroundRing: 4,
+    shape: { arcDeg: 24, equatorPullDeg: 0 },
+  },
+])
+
+/**
+ * Sample N evenly-spaced 3D points along one arrow's arc on the unit sphere.
+ *
+ * The arc is laid out in (lng, lat) using the band's `shape` definition, then
+ * each (lat, lng) is projected to vec3 via latLngToVec3. Longitudinal flow
+ * direction depends on the belt: trade and polar belts blow east→west
+ * (arrowhead at the western end), westerlies blow west→east.
+ *
+ * `arrowsAroundRing` is the parameter the caller passes (typically just
+ * `band.arrowsAroundRing`) and controls the per-arrow longitude offset:
+ * arrow `longitudeIndex` is centered at lng = (360/arrowsAroundRing) * idx.
+ *
+ * `segments` is the resolution along the arc (number of points returned
+ * is segments + 1).
+ */
+export function arrowArcPoints(
+  band: CellBand,
+  longitudeIndex: number,
+  arrowsAroundRing: number,
+  segments: number,
+): THREE.Vector3[] {
+  const startLng = (360 / arrowsAroundRing) * longitudeIndex - 180
+  const flowSign = band.belt === 'westerly' ? +1 : -1 // east→west belts get -1
+  const endLng = startLng + flowSign * band.shape.arcDeg
+  // Equator pull: trade arrows bend toward the equator at their terminus.
+  const equatorSign = band.latDeg >= 0 ? -1 : +1
+  const endLat = band.latDeg + equatorSign * band.shape.equatorPullDeg
+
+  const out: THREE.Vector3[] = []
+  for (let i = 0; i <= segments; i++) {
+    const t = i / segments
+    const eased = t * t * (3 - 2 * t) // smoothstep so the curve eases
+    const lng = startLng + (endLng - startLng) * t
+    const lat = band.latDeg + (endLat - band.latDeg) * eased
+    out.push(latLngToVec3(lat, lng, 1))
+  }
+  return out
+}
+
+/** Every arrow in every band, ready for mesh construction. */
+export function allArrowArcs(): { band: CellBand; longitudeIndex: number; points: THREE.Vector3[] }[] {
+  const out: { band: CellBand; longitudeIndex: number; points: THREE.Vector3[] }[] = []
+  for (const band of CELL_BANDS) {
+    for (let i = 0; i < band.arrowsAroundRing; i++) {
+      out.push({
+        band,
+        longitudeIndex: i,
+        points: arrowArcPoints(band, i, band.arrowsAroundRing, 16),
+      })
+    }
+  }
+  return out
+}
