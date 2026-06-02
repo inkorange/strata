@@ -75,6 +75,7 @@ export const CELL_BANDS: ReadonlyArray<CellBand> = Object.freeze([
  * each (lat, lng) is projected to vec3 via latLngToVec3. Longitudinal flow
  * direction depends on the belt: trade and polar belts blow east→west
  * (arrowhead at the western end), westerlies blow west→east.
+ * The interpolation is linear in longitude with smoothstep easing on latitude, then projected to the sphere — this is not a strict SLERP/great-circle path, but the visual difference is negligible for the small arc spans (22–28°) used here.
  *
  * `arrowsAroundRing` is the parameter the caller passes (typically just
  * `band.arrowsAroundRing`) and controls the per-arrow longitude offset:
@@ -90,7 +91,9 @@ export function arrowArcPoints(
   segments: number,
 ): THREE.Vector3[] {
   const startLng = (360 / arrowsAroundRing) * longitudeIndex - 180
-  const flowSign = band.belt === 'westerly' ? +1 : -1 // east→west belts get -1
+  // Westerlies flow west→east (flowSign = +1); trade winds and polar
+  // easterlies flow east→west (flowSign = -1).
+  const flowSign = band.belt === 'westerly' ? +1 : -1
   const endLng = startLng + flowSign * band.shape.arcDeg
   // Equator pull: trade arrows bend toward the equator at their terminus.
   const equatorSign = band.latDeg >= 0 ? -1 : +1
