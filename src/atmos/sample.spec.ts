@@ -106,4 +106,26 @@ describe('sampleAt — verbal labels', () => {
     expect(s.lat).toBe(40)
     expect(s.lng).toBe(-90)
   })
+
+  it('crosses the temp WARM/MILD boundary at exactly 25°C', () => {
+    // tempLabel: c >= 25 → WARM. Construct via |lat| so base temp falls
+    // ~0.45°C/deg. Day side adds +5°C; at lat=0 lng=0 h=12 we get ~35°C.
+    // Pick a latitude where unsunlit temp lands just under/over the boundary.
+    const justAbove = sampleAt(11, 90, 12) // not illuminated (sun at 0,0); temp ~ 30 - 0.45*11 = 25.05
+    const justBelow = sampleAt(12, 90, 12) // temp ~ 30 - 0.45*12 = 24.6
+    expect(justAbove.labels.temp).toBe('WARM')
+    expect(justBelow.labels.temp).toBe('MILD')
+  })
+
+  it('crosses the wind BREEZY/WINDY boundary at |lat| = 30', () => {
+    expect(sampleAt(29.9, 0, 12).labels.wind).toBe('BREEZY')
+    expect(sampleAt(30, 0, 12).labels.wind).toBe('WINDY')
+    expect(sampleAt(30.1, 0, 12).labels.wind).toBe('WINDY')
+  })
+
+  it('crosses the wind WINDY/CALM boundary at |lat| = 60', () => {
+    expect(sampleAt(59.9, 0, 12).labels.wind).toBe('WINDY')
+    expect(sampleAt(60, 0, 12).labels.wind).toBe('CALM')
+    expect(sampleAt(60.1, 0, 12).labels.wind).toBe('CALM')
+  })
 })
