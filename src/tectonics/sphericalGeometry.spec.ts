@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { describe, expect, it } from 'vitest'
-import { latLngToVec3, slerpOnSphere, triangulatePolygonFan } from './sphericalGeometry'
+import { latLngToVec3, slerpOnSphere, triangulatePolygonFan, vec3ToLatLng } from './sphericalGeometry'
 
 const FLOAT_TOLERANCE = 1e-6
 
@@ -123,6 +123,42 @@ describe('triangulatePolygonFan', () => {
     const [cx = 0, cy = 0, cz = 0] = positions
     const centroidLength = Math.sqrt(cx * cx + cy * cy + cz * cz)
     expect(centroidLength).toBeCloseTo(r, 5)
+  })
+})
+
+describe('vec3ToLatLng', () => {
+  it('inverts latLngToVec3 at the prime meridian', () => {
+    const v = latLngToVec3(0, 0, 1)
+    const [lat, lng] = vec3ToLatLng(v)
+    expect(lat).toBeCloseTo(0, 5)
+    expect(lng).toBeCloseTo(0, 5)
+  })
+
+  it('inverts at the north pole regardless of input lng', () => {
+    const v = latLngToVec3(90, 42, 1)
+    const [lat] = vec3ToLatLng(v)
+    expect(lat).toBeCloseTo(90, 5)
+  })
+
+  it('inverts at 90°E', () => {
+    const v = latLngToVec3(0, 90, 1)
+    const [lat, lng] = vec3ToLatLng(v)
+    expect(lat).toBeCloseTo(0, 5)
+    expect(lng).toBeCloseTo(90, 5)
+  })
+
+  it('inverts at 90°W', () => {
+    const v = latLngToVec3(0, -90, 1)
+    const [lat, lng] = vec3ToLatLng(v)
+    expect(lat).toBeCloseTo(0, 5)
+    expect(lng).toBeCloseTo(-90, 5)
+  })
+
+  it('is robust to vectors not on the unit sphere (normalizes internally)', () => {
+    const v = latLngToVec3(30, 45, 7.5)
+    const [lat, lng] = vec3ToLatLng(v)
+    expect(lat).toBeCloseTo(30, 5)
+    expect(lng).toBeCloseTo(45, 5)
   })
 })
 
