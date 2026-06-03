@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { latLngToVec3 } from '@/src/tectonics/sphericalGeometry'
-import { itczBrightness, subsolarPoint, sunDirection } from './solar'
+import {
+  EARTH_TILT_DEG,
+  itczBrightness,
+  subsolarLatForSeason,
+  subsolarPoint,
+  sunDirection,
+} from './solar'
 
 describe('subsolarPoint', () => {
   it('returns (0, 0) at noon (h=12)', () => {
@@ -33,6 +39,44 @@ describe('subsolarPoint', () => {
       expect(lat).toBeCloseTo(0, 5)
     }
   })
+
+  it('shifts to the Tropic of Cancer (+23.44°N) at June solstice', () => {
+    for (const h of [0, 6, 12, 18]) {
+      const [lat] = subsolarPoint(h, 'june-solstice')
+      expect(lat).toBeCloseTo(EARTH_TILT_DEG, 5)
+    }
+  })
+
+  it('shifts to the Tropic of Capricorn (-23.44°S) at December solstice', () => {
+    for (const h of [0, 6, 12, 18]) {
+      const [lat] = subsolarPoint(h, 'december-solstice')
+      expect(lat).toBeCloseTo(-EARTH_TILT_DEG, 5)
+    }
+  })
+
+  it('longitude advancement is independent of season', () => {
+    // The hour-driven longitude sweep is the same regardless of orbital
+    // position; only the subsolar latitude moves between seasons.
+    for (const h of [0, 6, 12, 18]) {
+      const [, lngEq] = subsolarPoint(h, 'equinox')
+      const [, lngJun] = subsolarPoint(h, 'june-solstice')
+      const [, lngDec] = subsolarPoint(h, 'december-solstice')
+      expect(lngJun).toBeCloseTo(lngEq, 5)
+      expect(lngDec).toBeCloseTo(lngEq, 5)
+    }
+  })
+})
+
+describe('subsolarLatForSeason', () => {
+  it('returns 0 at equinox', () => {
+    expect(subsolarLatForSeason('equinox')).toBe(0)
+  })
+  it('returns +23.44 at June solstice', () => {
+    expect(subsolarLatForSeason('june-solstice')).toBeCloseTo(EARTH_TILT_DEG, 5)
+  })
+  it('returns -23.44 at December solstice', () => {
+    expect(subsolarLatForSeason('december-solstice')).toBeCloseTo(-EARTH_TILT_DEG, 5)
+  })
 })
 
 describe('sunDirection', () => {
@@ -50,7 +94,13 @@ describe('sunDirection', () => {
     expect(v.z).toBeCloseTo(0, 5)
   })
 
-  it('matches the subsolar point under latLngToVec3 convention', () => {
+  it('matches the subsolar point under latLngToVec3 convention (Earth-local frame)', () => {
+    // sunDirection returns the Earth-LOCAL direction to the subsolar point
+    // at hour h. sample.ts dots this against an Earth-local point to
+    // compute illumination, which works because the dot product is
+    // rotation-invariant: same answer whether you express both vectors in
+    // local or in world coords. The visual sun in the scene is fixed at
+    // world +X (heliocentric model) — that's set in Sun.tsx, not here.
     for (const h of [0, 6, 12, 18]) {
       const [lat, lng] = subsolarPoint(h)
       const fromSubsolar = latLngToVec3(lat, lng, 1)

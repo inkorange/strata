@@ -23,15 +23,19 @@ test('toggling a chip flips its aria-pressed state', async ({ page }) => {
   await expect(cells).toHaveAttribute('aria-pressed', 'true')
 })
 
-test('Wind belts legend expands on click', async ({ page }) => {
+test('Circulation legend shows three wind belts and the doldrums', async ({ page }) => {
   await page.goto('/atmosphere')
-  const toggle = page.getByRole('button', { name: 'Show wind-belt legend' })
-  await expect(toggle).toBeVisible()
-  await toggle.dispatchEvent('click')
-  // Once expanded, the three belt labels appear.
-  await expect(page.getByText('Trade winds → equator')).toBeVisible()
-  await expect(page.getByText('Westerlies W → E')).toBeVisible()
-  await expect(page.getByText('Polar easterlies E → W')).toBeVisible()
+  // Mobile starts the legend collapsed behind an icon; tap to expand if so.
+  const opener = page.getByRole('button', { name: 'Show atmospheric circulation legend' })
+  if (await opener.isVisible()) {
+    await opener.dispatchEvent('click')
+  }
+  const legend = page.getByRole('complementary', { name: 'Atmospheric circulation legend' })
+  await expect(legend).toBeVisible()
+  await expect(legend.getByText('Trade winds → equator')).toBeVisible()
+  await expect(legend.getByText('Westerlies W → E')).toBeVisible()
+  await expect(legend.getByText('Polar easterlies E → W')).toBeVisible()
+  await expect(legend.getByText(/Doldrums \(ITCZ\)/)).toBeVisible()
 })
 
 test('Atmosphere scrubber and chips are not present on the hub', async ({ page }) => {

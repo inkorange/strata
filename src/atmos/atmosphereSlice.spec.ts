@@ -51,4 +51,15 @@ describe('atmosphereSlice', () => {
     store.getState().setInspectAt(null)
     expect(store.getState().inspectAt).toBeNull()
   })
+
+  it('defaults season to equinox and setSeason cycles between options', async () => {
+    const store = await freshStore()
+    expect(store.getState().season).toBe('equinox')
+    store.getState().setSeason('june-solstice')
+    expect(store.getState().season).toBe('june-solstice')
+    store.getState().setSeason('december-solstice')
+    expect(store.getState().season).toBe('december-solstice')
+    store.getState().setSeason('equinox')
+    expect(store.getState().season).toBe('equinox')
+  })
 })

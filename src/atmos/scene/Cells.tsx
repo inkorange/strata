@@ -5,8 +5,14 @@ import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { CELL_BANDS, allArrowArcs, type CellBand } from '@/src/atmos/cellBands'
+import { subsolarLatForSeason } from '@/src/atmos/solar'
 import { usePrefersReducedMotion } from '@/src/lib/accessibility'
 import { useStore } from '@/src/store'
+
+/** Fraction of the subsolar latitude offset that wind belts shift by.
+ *  Real Earth: trade-wind / westerlies / polar belts shift about half-way
+ *  toward the summer hemisphere relative to subsolar lat (rough average). */
+const SEASONAL_BELT_SHIFT_FRACTION = 0.5
 
 const TUBE_RADIUS = 0.006
 const TUBE_LIFT = 1.012 // arrows ride slightly above the Earth surface
@@ -55,8 +61,8 @@ interface BandMeshData {
   headMaterial: THREE.MeshBasicMaterial
 }
 
-function buildBandMeshes(): BandMeshData[] {
-  const arcs = allArrowArcs()
+function buildBandMeshes(latOffsetDeg: number): BandMeshData[] {
+  const arcs = allArrowArcs(latOffsetDeg)
   const byBandId = new Map<CellBand['id'], BandMeshData>()
 
   for (const band of CELL_BANDS) {
@@ -146,9 +152,16 @@ function buildBandMeshes(): BandMeshData[] {
  */
 export function Cells() {
   const visibleCells = useStore((s) => s.layers.cells)
+  const season = useStore((s) => s.season)
   const prefersReducedMotion = usePrefersReducedMotion()
 
-  const meshes = useMemo(() => buildBandMeshes(), [])
+  // Seasonal shift: wind belts ride about halfway between their equinox
+  // latitudes and the current subsolar latitude. Recomputing the geometry
+  // on season change is cheap (a few-hundred-vertex tube system) and only
+  // fires when the user picks a different season.
+  const latOffsetDeg = subsolarLatForSeason(season) * SEASONAL_BELT_SHIFT_FRACTION
+
+  const meshes = useMemo(() => buildBandMeshes(latOffsetDeg), [latOffsetDeg])
 
   // Shared dash phase scrolls every tube. ~0.6 cycles per second feels live
   // without being distracting.

@@ -18,17 +18,23 @@ function formatHour(h: number): string {
   return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`
 }
 
+/** Real seconds per simulated hour during playback. 1.25s/hour → 30s per full day. */
+const SECONDS_PER_HOUR = 1.25
+
 /**
  * 24-hour day-cycle scrubber rendered at the bottom of the viewport.
  *
  * Visually mirrors Tectonics' Timeline placement (fixed, portaled to body,
  * sidebar offset on desktop). Track shows a day-cycle gradient (midnight →
  * sunrise → noon → sunset → midnight). Click anywhere on the track to jump;
- * drag the knob to scrub. Uses pointer events for unified mouse + touch.
+ * drag the knob to scrub. Play/stop loops the day cycle continuously (~30s
+ * per full day) via requestAnimationFrame so it tracks the monitor refresh.
  */
 export function Timeline() {
   const hour = useStore((s) => s.hour)
   const setHour = useStore((s) => s.setHour)
+  const playing = useStore((s) => s.playing)
+  const togglePlaying = useStore((s) => s.togglePlaying)
   const isClient = useIsClient()
   const trackRef = useRef<HTMLDivElement | null>(null)
   const [dragging, setDragging] = useState(false)
@@ -44,6 +50,8 @@ export function Timeline() {
     [setHour],
   )
 
+  // Drag handlers (pointermove on window so the knob keeps following even
+  // when the cursor leaves the track).
   useEffect(() => {
     if (!dragging) return
     const onMove = (e: PointerEvent) => updateFromClientX(e.clientX)
@@ -58,11 +66,38 @@ export function Timeline() {
     }
   }, [dragging, updateFromClientX])
 
+  // Playback loop: rAF advances `hour` by real-time delta / SECONDS_PER_HOUR
+  // while playing, wrapping at 24 so the cycle loops cleanly. Reading the
+  // current hour via store.getState() inside the frame avoids closing over
+  // a stale value.
+  useEffect(() => {
+    if (!playing) return
+    let raf = 0
+    let lastT = performance.now()
+    const step = (now: number) => {
+      const dt = (now - lastT) / 1000
+      lastT = now
+      const current = useStore.getState().hour
+      let next = current + dt / SECONDS_PER_HOUR
+      while (next >= 24) next -= 24
+      setHour(next)
+      raf = requestAnimationFrame(step)
+    }
+    raf = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(raf)
+  }, [playing, setHour])
+
   const content = (
     <div className="pointer-events-auto fixed z-20 bottom-4 inset-x-4 sm:left-80 sm:right-4 flex items-center gap-3 rounded-lg border border-border/40 bg-card/85 px-4 py-3 backdrop-blur">
-      <span aria-hidden className="text-foreground/80">
-        ☀
-      </span>
+      <button
+        type="button"
+        onClick={() => togglePlaying()}
+        className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/60 bg-card text-foreground hover:bg-foreground/10"
+        aria-label={playing ? 'Stop day cycle' : 'Play day cycle'}
+        aria-pressed={playing}
+      >
+        {playing ? '◼' : '▶'}
+      </button>
       <div
         ref={trackRef}
         onPointerDown={(e) => {

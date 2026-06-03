@@ -1,4 +1,4 @@
-import { sunDirection } from './solar'
+import { type Season, subsolarLatForSeason, sunDirection } from './solar'
 import { latLngToVec3 } from '@/src/tectonics/sphericalGeometry'
 
 export interface InspectSample {
@@ -12,36 +12,55 @@ export interface InspectSample {
 }
 
 const LAPSE_RATE_C_PER_KM = 6.5
+/** Fraction of subsolar latitude the temperature baseline shifts by.
+ *  Matches the Heatmap shader's seasonal heat-shift fraction so the
+ *  inspect readout aligns with what the user sees on the globe. */
+const SEASONAL_HEAT_SHIFT_FRACTION = 0.6
 
 /**
  * Atmospheric values at a surface point. All physics is a deliberately
  * simple v1 model:
- *   - Base temperature falls linearly with |lat| from 30°C at the equator.
- *   - Day/night adjustment of ±5°C from the sun-direction dot product.
+ *   - Base temperature peaks at the (season-shifted) "hot latitude" and
+ *     falls off ~0.45°C per degree of angular distance from there.
+ *   - Day/night adjustment of ±5°C from the sun-direction dot product
+ *     (sun direction depends on season too).
  *   - Pressure profile has the three classical zones: equatorial low,
  *     subtropical high at ±30°, subpolar low at ±60°, polar high at ±90°.
- *   - Dewpoint spread grows with |lat| (humid tropics → dry poles).
+ *   - Dewpoint spread grows with distance from the hot latitude (humid
+ *     tropics → dry poles).
  *
  * No globals, no IO — safe to memoize, server-render, or run in tests.
  */
-export function sampleAt(lat: number, lng: number, hour: number): InspectSample {
+export function sampleAt(
+  lat: number,
+  lng: number,
+  hour: number,
+  season: Season = 'equinox',
+): InspectSample {
   const absLat = Math.abs(lat)
+  // Season-shifted hot baseline. Matches the heatmap shader so the
+  // numerical readout agrees with the visible gradient peak.
+  const hotLat = subsolarLatForSeason(season) * SEASONAL_HEAT_SHIFT_FRACTION
+  const distFromHot = Math.abs(lat - hotLat)
 
-  // Base temperature: 30°C at eq, falls ~0.45°C per degree latitude
-  // (~ -10°C at 90°). Day/night: +5°C if point is well-illuminated, -5°C
-  // if well-shadowed. dot > 0.3 ≈ within 73° of the subsolar point.
+  // Base temperature: 30°C at the hot baseline, falls ~0.45°C per degree
+  // angular distance from there. Day/night: +5°C if point is well-
+  // illuminated, -5°C if well-shadowed. dot > 0.3 ≈ within 73° of subsolar.
   const point = latLngToVec3(lat, lng, 1)
-  const sun = sunDirection(hour)
+  const sun = sunDirection(hour, season)
   const illumination = point.dot(sun)
   const dayNightOffset = illumination > 0.3 ? 5 : illumination < -0.3 ? -5 : 0
-  const tempC = 30 - 0.45 * absLat + dayNightOffset
+  const tempC = 30 - 0.45 * distFromHot + dayNightOffset
 
   // Pressure profile via piecewise cubic blending around the four anchors:
-  //   eq 1008 | 30° 1018 | 60° 1005 | 90° 1015
+  //   eq 1008 | 30° 1018 | 60° 1005 | 90° 1015. Still |lat| based —
+  //   pressure zones are tied to the rotating-frame Coriolis structure,
+  //   not the season.
   const pressureHpa = pressureProfile(absLat)
 
-  // Dewpoint spread: 4°C tropics → 20°C poles, smooth quadratic.
-  const spread = 4 + (16 * absLat * absLat) / (90 * 90)
+  // Dewpoint spread: 4°C near hot baseline → 20°C at the poles, smooth
+  // quadratic on distance from hot.
+  const spread = 4 + (16 * distFromHot * distFromHot) / (90 * 90)
   const dewpointC = tempC - spread
 
   return {

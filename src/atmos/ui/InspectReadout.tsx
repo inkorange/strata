@@ -20,31 +20,57 @@ function formatLng(lng: number): string {
   return `${Math.abs(lng).toFixed(0)}°${ew}`
 }
 
+/** Approximate readout footprint used for viewport-edge clamping. */
+const READOUT_W = 240
+const READOUT_H = 110
+const READOUT_OFFSET = 14
+
+/** Position the readout near (x, y) but flip / clamp so it stays fully
+ *  on-screen. Prefers below-right of the cursor; flips to above / left
+ *  when too close to the viewport edge. */
+function anchorStyle(x: number, y: number): { left: number; top: number } {
+  const vw = typeof window !== 'undefined' ? window.innerWidth : 1024
+  const vh = typeof window !== 'undefined' ? window.innerHeight : 768
+  let left = x + READOUT_OFFSET
+  let top = y + READOUT_OFFSET
+  if (left + READOUT_W > vw - 8) left = x - READOUT_W - READOUT_OFFSET
+  if (top + READOUT_H > vh - 8) top = y - READOUT_H - READOUT_OFFSET
+  if (left < 8) left = 8
+  if (top < 8) top = 8
+  return { left, top }
+}
+
 /**
- * Top-left data readout. Hidden until the user hovers/taps the globe.
- * Renders three tiers of detail:
+ * Data readout that anchors at the user's click/hover point on the globe.
+ * Hidden until the user interacts. Renders three tiers of detail:
  *   - Beginner (mobile-lite):    big verbal labels (WARM · BREEZY · HUMID)
  *   - Standard  (balanced):      numbers (22°C · 1013 hPa · 14°dp) + location
  *   - Advanced  (desktop-ultra): + lapse rate + specific-humidity + tiny T(z) graph
  */
 export function InspectReadout() {
   const inspectAt = useStore((s) => s.inspectAt)
+  const inspectScreen = useStore((s) => s.inspectScreen)
   const hour = useStore((s) => s.hour)
+  const season = useStore((s) => s.season)
   const tierOverride = useStore((s) => s.tierOverride)
 
   // SSR/hydration guard for the tier branch — matches TectonicsBody pattern.
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
 
-  if (!inspectAt) return null
+  if (!inspectAt || !inspectScreen) return null
   const [lat, lng] = inspectAt
-  const s = sampleAt(lat, lng, hour)
+  const s = sampleAt(lat, lng, hour, season)
   const effectiveTier = mounted ? tierOverride : null
+  const pos = anchorStyle(inspectScreen.x, inspectScreen.y)
 
   // Beginner
   if (effectiveTier === 'mobile-lite') {
     return (
-      <div className="pointer-events-none fixed top-20 left-4 sm:top-24 sm:left-80 z-10 rounded-lg border border-border/40 bg-card/85 backdrop-blur px-4 py-3 text-foreground">
+      <div
+        style={pos}
+        className="pointer-events-none fixed z-10 rounded-lg border border-border/40 bg-card/95 backdrop-blur px-4 py-3 text-foreground shadow-[0_6px_24px_rgba(0,0,0,0.45)]"
+      >
         <div className="text-xs uppercase tracking-wider text-[#5cc6ff] mb-1">Conditions</div>
         <div className="text-lg font-semibold leading-tight">{s.labels.temp}</div>
         <div className="text-lg font-semibold leading-tight">{s.labels.wind}</div>
@@ -75,7 +101,10 @@ export function InspectReadout() {
   const qGPerKg = q * 1000
 
   return (
-    <div className="pointer-events-none fixed top-20 left-4 sm:top-24 sm:left-80 z-10 rounded-lg border border-border/40 bg-card/85 backdrop-blur px-4 py-3 text-foreground font-mono tabular-nums">
+    <div
+      style={pos}
+      className="pointer-events-none fixed z-10 rounded-lg border border-border/40 bg-card/95 backdrop-blur px-4 py-3 text-foreground font-mono tabular-nums shadow-[0_6px_24px_rgba(0,0,0,0.45)]"
+    >
       <div className="text-xs uppercase tracking-wider text-[#5cc6ff] mb-1 font-sans">
         {formatLat(lat)} · {formatLng(lng)} · {formatHour(hour)}
       </div>

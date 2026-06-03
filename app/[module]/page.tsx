@@ -13,9 +13,9 @@ export default async function ModulePage({ params }: PageProps) {
   if (!VALID.has(module)) notFound()
 
   const def = MODULES[module as keyof typeof MODULES]
-  const { Body, ...moduleData } = def
+  const { Body, HeaderAction, ...moduleData } = def
   return (
-    <ModuleFrame module={moduleData}>
+    <ModuleFrame module={moduleData} headerAction={HeaderAction ? <HeaderAction /> : null}>
       <Body />
     </ModuleFrame>
   )

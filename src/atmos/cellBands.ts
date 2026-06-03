@@ -89,6 +89,7 @@ export function arrowArcPoints(
   longitudeIndex: number,
   arrowsAroundRing: number,
   segments: number,
+  latOffsetDeg = 0,
 ): THREE.Vector3[] {
   const startLng = (360 / arrowsAroundRing) * longitudeIndex - 180
   // Westerlies flow west→east (flowSign = +1); trade winds and polar
@@ -96,29 +97,37 @@ export function arrowArcPoints(
   const flowSign = band.belt === 'westerly' ? +1 : -1
   const endLng = startLng + flowSign * band.shape.arcDeg
   // Equator pull: trade arrows bend toward the equator at their terminus.
+  // We compute the "equator" relative to the offset center latitude so
+  // the seasonal shift carries the arrow shape with it (a band shifted
+  // 12° north still bends its terminus toward the shifted equator).
+  const baseLat = band.latDeg + latOffsetDeg
   const equatorSign = band.latDeg >= 0 ? -1 : +1
-  const endLat = band.latDeg + equatorSign * band.shape.equatorPullDeg
+  const endLat = baseLat + equatorSign * band.shape.equatorPullDeg
 
   const out: THREE.Vector3[] = []
   for (let i = 0; i <= segments; i++) {
     const t = i / segments
     const eased = t * t * (3 - 2 * t) // smoothstep so the curve eases
     const lng = startLng + (endLng - startLng) * t
-    const lat = band.latDeg + (endLat - band.latDeg) * eased
+    const lat = baseLat + (endLat - baseLat) * eased
     out.push(latLngToVec3(lat, lng, 1))
   }
   return out
 }
 
-/** Every arrow in every band, ready for mesh construction. */
-export function allArrowArcs(): { band: CellBand; longitudeIndex: number; points: THREE.Vector3[] }[] {
+/** Every arrow in every band, ready for mesh construction. `latOffsetDeg`
+ *  shifts the whole assembly toward the summer hemisphere — see Cells.tsx,
+ *  which scales this from the current season's subsolar latitude. */
+export function allArrowArcs(
+  latOffsetDeg = 0,
+): { band: CellBand; longitudeIndex: number; points: THREE.Vector3[] }[] {
   const out: { band: CellBand; longitudeIndex: number; points: THREE.Vector3[] }[] = []
   for (const band of CELL_BANDS) {
     for (let i = 0; i < band.arrowsAroundRing; i++) {
       out.push({
         band,
         longitudeIndex: i,
-        points: arrowArcPoints(band, i, band.arrowsAroundRing, 16),
+        points: arrowArcPoints(band, i, band.arrowsAroundRing, 16, latOffsetDeg),
       })
     }
   }
