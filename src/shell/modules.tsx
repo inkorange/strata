@@ -1,9 +1,9 @@
 import type { ComponentType } from 'react'
-import type { ModuleId } from '@/src/store/shellSlice'
 import { AtmosphereBody } from '@/src/atmos/ui/AtmosphereBody'
 import { ChipBar } from '@/src/atmos/ui/ChipBar'
+import type { ModuleId } from '@/src/store/shellSlice'
+import { SystemsBody } from '@/src/systems/ui/SystemsBody'
 import { TectonicsBody } from '@/src/tectonics/ui/TectonicsBody'
-import { StubModuleBody } from './StubModuleBody'
 
 export interface ModuleDef {
   id: Exclude<ModuleId, 'hub'>
@@ -35,12 +35,6 @@ export interface ModuleDef {
    *  (e.g. atmosphere layer chips) that belong with the title rather
    *  than floating over the canvas. */
   HeaderAction?: ComponentType
-}
-
-function makeStub(label: string, accent: string): ComponentType {
-  return function Stub() {
-    return <StubModuleBody moduleLabel={label} accent={accent} />
-  }
 }
 
 export const MODULES: Record<Exclude<ModuleId, 'hub'>, ModuleDef> = {
@@ -79,6 +73,6 @@ export const MODULES: Record<Exclude<ModuleId, 'hub'>, ModuleDef> = {
     accentHex: '#7ad9aa',
     // Pulled back to show reservoir flows around Earth.
     dolly: { direction: [0, 0, 1], fillRatio: 0.55, lookAt: [0, 0, 0] },
-    Body: makeStub('Earth Systems', '#7ad9aa'),
+    Body: SystemsBody,
   },
 }
