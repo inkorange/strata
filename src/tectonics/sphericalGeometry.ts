@@ -33,6 +33,26 @@ export function latLngToVec3(lat: number, lng: number, radius: number): THREE.Ve
 }
 
 /**
+ * Inverse of latLngToVec3. Takes any 3D point (vector need not be on the
+ * unit sphere — its direction is what matters) and returns the (lat, lng)
+ * pair in degrees that latLngToVec3 maps to that direction.
+ *
+ *   vec3ToLatLng(latLngToVec3(lat, lng, r)) ≈ [lat, lng]   (element-wise, modulo float)
+ *
+ * Uses the same Z-negated convention as latLngToVec3: longitude increases
+ * clockwise from the north pole.
+ *
+ * For a zero-length vector the function returns [0, 0] rather than NaN.
+ */
+export function vec3ToLatLng(v: THREE.Vector3): [number, number] {
+  const len = Math.hypot(v.x, v.y, v.z) || 1
+  const y = v.y / len
+  const lat = (Math.asin(THREE.MathUtils.clamp(y, -1, 1)) * 180) / Math.PI
+  const lng = (Math.atan2(-v.z, v.x) * 180) / Math.PI
+  return [lat, lng]
+}
+
+/**
  * Spherical linear interpolation between two points on the unit sphere.
  * The output lies on the great-circle arc from `a` to `b`. Inputs are
  * expected to lie on the unit sphere; the output will too.

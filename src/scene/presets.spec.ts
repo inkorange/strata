@@ -6,9 +6,12 @@ describe('PRESETS', () => {
     expect(Object.keys(PRESETS).sort()).toEqual(['balanced', 'desktop-ultra', 'mobile-lite'].sort())
   })
 
-  it('desktop-ultra keeps only vignette in postFx (bloom/ssao/dof disabled for v1 due to flicker)', () => {
+  it('desktop-ultra enables bloom + vignette and gates the expensive passes', () => {
+    // Bloom was re-enabled when the atmosphere module shipped — its
+    // shader-driven sun needs the bloom pass to read as a real glowing
+    // star. SSAO + DOF remain off (too heavy on the surface scene).
     const p: Preset = PRESETS['desktop-ultra']
-    expect(p.postFx.bloom).toBe(false)
+    expect(p.postFx.bloom).toBe(true)
     expect(p.postFx.vignette).toBe(true)
     expect(p.postFx.ssao).toBe(false)
     expect(p.postFx.dof).toBe(false)

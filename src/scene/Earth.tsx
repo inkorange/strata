@@ -12,6 +12,13 @@ import { useEarthTextures } from './useEarthTextures'
 // without flicker. The component file in ./AtmosphereRim.tsx is kept
 // intact so the eventual fix can re-enable it without re-implementing.
 
+// Hoisted outside the component so re-renders don't allocate a new
+// THREE.Color instance for the emissive prop. R3F's reconciler treats a
+// fresh Color instance as a property change and updates the material,
+// which on some browsers triggers a brief recompile / flash — most
+// visible during a window-resize storm of layout-driven re-renders.
+const NIGHT_EMISSIVE_COLOR = new THREE.Color('#ffd9a0')
+
 export function Earth() {
   const effectiveTier = useStore((s) => s.effectiveTier())
   const preset = PRESETS[effectiveTier]
@@ -34,7 +41,7 @@ export function Earth() {
           roughness={1}
           metalness={0.05}
           emissiveMap={textures.night}
-          emissive={new THREE.Color('#ffd9a0')}
+          emissive={NIGHT_EMISSIVE_COLOR}
           emissiveIntensity={1.0}
         />
       </mesh>

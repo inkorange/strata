@@ -1,6 +1,5 @@
-import * as THREE from 'three'
 import type { ContinentId, Era, PlateId } from './eras'
-import { latLngToVec3, slerpOnSphere } from './sphericalGeometry'
+import { latLngToVec3, slerpOnSphere, vec3ToLatLng } from './sphericalGeometry'
 
 export interface TweenedPlate {
   id: PlateId
@@ -42,14 +41,7 @@ export function tweenPlates(source: Era, target: Era, t: number): ReadonlyArray<
       const vb = latLngToVec3(tlat, tlng, 1)
       const vi = slerpOnSphere(va, vb, t)
 
-      // Convert interpolated vec3 back to (lat, lng) degrees. Must be the
-      // exact inverse of latLngToVec3, which negates z, so the lng inverse
-      // is atan2(-z, x) — not atan2(z, x). Using the wrong sign here makes
-      // tweens snap to a longitude-mirrored pose on the first frame of
-      // animation because the SLERP→lat/lng→vec3 roundtrip in the renderer
-      // produces a position far from the source.
-      const lat = (Math.asin(THREE.MathUtils.clamp(vi.y, -1, 1)) * 180) / Math.PI
-      const lng = (Math.atan2(-vi.z, vi.x) * 180) / Math.PI
+      const [lat, lng] = vec3ToLatLng(vi)
       interpolated.push([lat, lng] as const)
     }
 
@@ -111,8 +103,7 @@ export function tweenContinents(
         const vb = latLngToVec3(tlat, tlng, 1)
         const vi = slerpOnSphere(va, vb, t)
 
-        const lat = (Math.asin(THREE.MathUtils.clamp(vi.y, -1, 1)) * 180) / Math.PI
-        const lng = (Math.atan2(-vi.z, vi.x) * 180) / Math.PI
+        const [lat, lng] = vec3ToLatLng(vi)
         piece.push([lat, lng] as const)
       }
       interpolatedPolys.push(piece)

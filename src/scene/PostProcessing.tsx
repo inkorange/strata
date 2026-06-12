@@ -22,7 +22,13 @@ export function PostProcessing() {
     <EffectComposer multisampling={preset.shadowMapSize > 0 ? 4 : 0}>
       <>
         {bloom && (
-          <Bloom intensity={0.35} luminanceThreshold={1.1} luminanceSmoothing={0.1} mipmapBlur />
+          <Bloom
+            intensity={0.45}
+            luminanceThreshold={0.85}
+            luminanceSmoothing={0.22}
+            mipmapBlur
+            radius={0.7}
+          />
         )}
         {ssao && <SSAO radius={0.12} intensity={20} luminanceInfluence={0.6} />}
         {dof && <DepthOfField focusDistance={0.02} focalLength={0.05} bokehScale={2.5} />}

@@ -66,20 +66,15 @@ export function Scene({ children, controls = true }: SceneProps) {
       <PerspectiveCamera makeDefault position={camera.position} fov={camera.fov} />
 
       {/* IBL: HDRI drives ambient + reflections. background=false keeps the
-       * deep-space color as the canvas backdrop instead of showing the HDRI. */}
-      <Environment files={preset.hdriPath} background={false} environmentIntensity={0.55} />
+       * deep-space color as the canvas backdrop instead of showing the HDRI.
+       * Dim across all modules so the dark side reads as truly dark and the
+       * Sun's directional light dominates the lit hemisphere. */}
+      <Environment files={preset.hdriPath} background={false} environmentIntensity={0.18} />
 
-      {/* Key sun: directional light, casts shadows on capable tiers.
-       * Positioned to backlight the Earth from upper-left for a strong
-       * day/night terminator. */}
-      <directionalLight
-        position={[5, 3, 5]}
-        intensity={2.2}
-        castShadow={preset.shadowMapSize > 0}
-        shadow-mapSize={[preset.shadowMapSize || 1024, preset.shadowMapSize || 1024]}
-        shadow-bias={-0.0005}
-      />
-      <ambientLight intensity={0.3} />
+      {/* No static key light — the <Sun /> component (in PersistentScene)
+       * provides the sole moving directional source on every Earth view,
+       * for visual consistency across the hub and all modules. */}
+      <ambientLight intensity={0.08} />
 
       <Starfield />
 
@@ -90,10 +85,18 @@ export function Scene({ children, controls = true }: SceneProps) {
           makeDefault
           enablePan={false}
           enableZoom
-          minDistance={2.5}
-          maxDistance={12}
-          autoRotate
-          autoRotateSpeed={0.4}
+          /* Wide min/max so the CameraDolly's aspect-scaled module positions
+             (which can be 7-10 units out in mobile portrait) fit within the
+             clamp. min stays at 1.6 so manual zoom can get close to Earth
+             without clipping through the surface. */
+          minDistance={1.6}
+          maxDistance={25}
+          /* Camera stays still — the Earth itself spins on its tilted axis
+             (driven by `hour` in atmosphere, continuous ambient rotation
+             elsewhere), so a camera revolution on top would double the
+             apparent motion and make the spin direction ambiguous. The
+             user can still orbit manually by dragging. */
+          autoRotate={false}
         />
       )}
     </Canvas>
