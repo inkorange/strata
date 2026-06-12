@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  BASELINE_MASSES,
-  RESERVOIR_KEYS,
-  SCENARIOS,
-  type ReservoirKey,
-} from './carbonModel'
+import { BASELINE_MASSES, RESERVOIR_KEYS, type ReservoirKey, SCENARIOS } from './carbonModel'
 
 describe('carbonModel', () => {
   it('defines the four reservoirs in fixed order', () => {

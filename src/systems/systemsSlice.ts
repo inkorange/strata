@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand'
-import { type Masses, type ScenarioId, SCENARIOS } from './carbonModel'
+import { type Masses, SCENARIOS, type ScenarioId } from './carbonModel'
 import { step } from './step'
 
 const DEFAULT_SCENARIO: ScenarioId = 'present-day'

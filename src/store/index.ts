@@ -1,8 +1,8 @@
 import { create } from 'zustand'
+import { type AtmosphereSlice, createAtmosphereSlice } from '@/src/atmos/atmosphereSlice'
+import { createSystemsSlice, type SystemsSlice } from '@/src/systems/systemsSlice'
 import { createTectonicsSlice, type TectonicsSlice } from '@/src/tectonics/tectonicsSlice'
 import { createShellSlice, type ShellSlice } from './shellSlice'
-import { createAtmosphereSlice, type AtmosphereSlice } from '@/src/atmos/atmosphereSlice'
-import { createSystemsSlice, type SystemsSlice } from '@/src/systems/systemsSlice'
 
 type Store = ShellSlice &
   TectonicsSlice &
