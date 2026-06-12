@@ -1,6 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
+import { cn } from '@/lib/utils'
 import { TopNav } from '@/src/ui/TopNav'
 import { TutorPanel } from '@/src/ui/TutorPanel'
 import { ClientShellInit } from './ClientShellInit'
@@ -35,11 +36,13 @@ export function ModuleFrame({ module, headerAction, children }: ModuleFrameProps
        * rather than an edge-to-edge drawer. Desktop: pinned to the left
        * edge from below the top nav. */}
       <aside
-        className="pointer-events-auto absolute z-10 bg-[#0d0a1f]/95 backdrop-blur-xl text-foreground overflow-auto
-          bottom-20 inset-x-4 max-h-[40dvh] rounded-2xl border border-white/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.5)]
-          sm:bottom-auto sm:top-24 sm:inset-x-auto sm:left-0 sm:right-auto sm:w-80 sm:h-auto sm:max-h-[70dvh]
-          sm:rounded-l-none sm:rounded-r-xl sm:border-l-0 sm:border-t-0 sm:border-b-0 sm:border-r
-          sm:shadow-[8px_0_32px_rgba(0,0,0,0.45)]"
+        className={cn(
+          'pointer-events-auto absolute z-10 bg-[#0d0a1f]/95 backdrop-blur-xl text-foreground overflow-auto',
+          'bottom-20 inset-x-4 max-h-[40dvh] rounded-2xl border border-white/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.5)]',
+          'sm:bottom-auto sm:top-24 sm:inset-x-auto sm:left-0 sm:right-auto sm:w-80 sm:h-auto sm:max-h-[70dvh]',
+          'sm:rounded-l-none sm:rounded-r-xl sm:border-l-0 sm:border-t-0 sm:border-b-0 sm:border-r',
+          'sm:shadow-[8px_0_32px_rgba(0,0,0,0.45)]',
+        )}
         aria-label="Module controls"
       >
         <div className="relative flex flex-col">
