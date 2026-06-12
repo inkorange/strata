@@ -9,6 +9,7 @@ import { Sun } from '@/src/atmos/scene/Sun'
 import { EARTH_TILT_RAD } from '@/src/atmos/solar'
 import { usePrefersReducedMotion } from '@/src/lib/accessibility'
 import { useStore } from '@/src/store'
+import { CarbonFlows } from '@/src/systems/scene/CarbonFlows'
 import { Reservoirs } from '@/src/systems/scene/Reservoirs'
 import { Plates } from '@/src/tectonics/scene/Plates'
 import { TectonicsOcean } from '@/src/tectonics/scene/TectonicsOcean'
@@ -121,6 +122,7 @@ export function PersistentScene() {
           <Atmosphere />
           <CloudBand />
           <Reservoirs />
+          <CarbonFlows />
         </EarthFrame>
       </Scene>
     </div>
