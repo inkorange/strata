@@ -9,6 +9,8 @@ import { Sun } from '@/src/atmos/scene/Sun'
 import { EARTH_TILT_RAD } from '@/src/atmos/solar'
 import { usePrefersReducedMotion } from '@/src/lib/accessibility'
 import { useStore } from '@/src/store'
+import { CarbonFlows } from '@/src/systems/scene/CarbonFlows'
+import { Reservoirs } from '@/src/systems/scene/Reservoirs'
 import { Plates } from '@/src/tectonics/scene/Plates'
 import { TectonicsOcean } from '@/src/tectonics/scene/TectonicsOcean'
 import { CameraDolly } from './CameraDolly'
@@ -36,13 +38,7 @@ const AMBIENT_SPIN_RATE = 0.1
  * 0 — the tilt is still applied for visual consistency, but the rotation
  * doesn't track hour.
  */
-function EarthFrame({
-  spinning,
-  children,
-}: {
-  spinning: boolean
-  children: React.ReactNode
-}) {
+function EarthFrame({ spinning, children }: { spinning: boolean; children: React.ReactNode }) {
   const season = useStore((s) => s.season)
   const prefersReducedMotion = usePrefersReducedMotion()
   const spinRef = useRef<THREE.Group>(null)
@@ -125,6 +121,8 @@ export function PersistentScene() {
           <Plates />
           <Atmosphere />
           <CloudBand />
+          <Reservoirs />
+          <CarbonFlows />
         </EarthFrame>
       </Scene>
     </div>

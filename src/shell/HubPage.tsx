@@ -25,9 +25,30 @@ export function HubPage() {
     <main className="pointer-events-none relative h-dvh w-dvw overflow-hidden">
       <TopNav />
 
+      {/* Hero wordmark — styled display font, top half of the screen on mobile
+       * and desktop. Sits over the dark space above the Earth. */}
+      <div className="pointer-events-none absolute inset-x-0 top-[15%] z-10 flex flex-col items-center px-6 text-center sm:top-[18%]">
+        <h1
+          className="text-7xl font-bold tracking-tight sm:text-9xl"
+          style={{
+            fontFamily: 'var(--font-display)',
+            backgroundImage: 'linear-gradient(100deg, #ff8c5a 0%, #5cc6ff 50%, #7ad9aa 100%)',
+            WebkitBackgroundClip: 'text',
+            backgroundClip: 'text',
+            color: 'transparent',
+            filter: 'drop-shadow(0 2px 18px rgba(0,0,0,0.55))',
+          }}
+        >
+          Strata
+        </h1>
+        <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/75 sm:max-w-md sm:text-base">
+          Drift plates, form weather, cycle carbon — explore the forces that shape the Earth.
+        </p>
+      </div>
+
       {/* Module entry cards — mobile: bottom drawer-style row; desktop: floating right column. */}
       <nav
-        className="pointer-events-auto absolute inset-x-0 bottom-0 z-10 flex flex-row gap-2 overflow-x-auto p-4 sm:inset-y-0 sm:right-0 sm:left-auto sm:w-80 sm:flex-col sm:justify-center sm:gap-4 sm:overflow-visible sm:p-6"
+        className="pointer-events-auto absolute inset-x-0 bottom-0 z-10 flex flex-row gap-2 overflow-x-auto p-4 sm:justify-center sm:gap-5 sm:overflow-visible sm:p-8 sm:pb-14"
         aria-label="Module entry"
       >
         {Object.values(MODULES).map((mod) => (
@@ -35,7 +56,7 @@ export function HubPage() {
             key={mod.id}
             href={`/${mod.id}`}
             onClick={() => setActiveModule(mod.id)}
-            className="group min-w-[180px] rounded-xl border border-white/[0.08] bg-[#0d0a1f]/95 px-5 py-4 backdrop-blur-xl transition hover:border-white/20 hover:bg-[#15102e]/95 sm:min-w-0 sm:shadow-[0_6px_24px_rgba(0,0,0,0.45)]"
+            className="group min-w-[180px] rounded-xl border border-white/[0.08] bg-[#0d0a1f]/95 px-5 py-4 backdrop-blur-xl transition hover:border-white/20 hover:bg-[#15102e]/95 sm:min-w-0 sm:w-72 sm:shadow-[0_6px_24px_rgba(0,0,0,0.45)]"
           >
             <div className="mb-3 flex items-center gap-2">
               <div

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { MODULES } from '@/src/shell/modules'
 import { useStore } from '@/src/store'
+import { AssistantIcon } from './icons/AssistantIcon'
 
 const SUGGESTED_PROMPTS: Record<string, string[]> = {
   hub: ['What can I do here?', 'Which module should I start with?'],
@@ -34,18 +35,20 @@ export function TutorPanel() {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="pointer-events-auto absolute bottom-4 right-4 z-20 inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/80 px-4 py-2 text-xs font-medium text-foreground backdrop-blur sm:bottom-6 sm:right-6"
+        className="pointer-events-auto absolute bottom-4 right-4 z-20 inline-flex h-14 w-14 items-center justify-center rounded-lg border border-white/[0.08] bg-[#0d0a1f]/92 backdrop-blur-xl transition-colors hover:bg-[#15102e]/92"
+        style={{ color: accent }}
         aria-expanded={open}
+        aria-label="Ask the tutor"
+        title="Ask the tutor"
       >
-        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: accent }} aria-hidden />
-        Ask the tutor
+        <AssistantIcon className="h-6 w-6" />
       </button>
 
       {open && (
         <aside
           className="pointer-events-auto absolute z-20 flex flex-col border border-border/40 bg-card/90 p-4 backdrop-blur
-            inset-x-4 bottom-16 max-h-[60dvh] rounded-lg
-            sm:inset-y-6 sm:right-6 sm:bottom-6 sm:left-auto sm:top-auto sm:w-80 sm:max-h-none"
+            inset-x-4 bottom-20 max-h-[60dvh] rounded-lg
+            sm:inset-y-6 sm:right-6 sm:bottom-20 sm:left-auto sm:top-auto sm:w-80 sm:max-h-none"
           aria-label="Tutor"
         >
           <header className="mb-3 flex items-center justify-between">

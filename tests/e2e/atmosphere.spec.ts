@@ -25,12 +25,16 @@ test('toggling a chip flips its aria-pressed state', async ({ page }) => {
 
 test('Circulation legend shows three wind belts and the doldrums', async ({ page }) => {
   await page.goto('/atmosphere')
-  // Mobile starts the legend collapsed behind an icon; tap to expand if so.
   const opener = page.getByRole('button', { name: 'Show atmospheric circulation legend' })
-  if (await opener.isVisible()) {
-    await opener.dispatchEvent('click')
-  }
   const legend = page.getByRole('complementary', { name: 'Atmospheric circulation legend' })
+  // The legend is portaled + client-only, so wait for it to hydrate before
+  // branching: on mobile the collapsed opener appears, on desktop the panel is
+  // already open. (Checking isVisible() too early raced hydration and skipped
+  // the tap, leaving the legend collapsed.)
+  await expect(opener.or(legend)).toBeVisible()
+  if (await opener.isVisible()) {
+    await opener.click()
+  }
   await expect(legend).toBeVisible()
   await expect(legend.getByText('Trade winds → equator')).toBeVisible()
   await expect(legend.getByText('Westerlies W → E')).toBeVisible()
