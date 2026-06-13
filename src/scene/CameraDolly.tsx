@@ -12,8 +12,14 @@ const DURATION_MS = 1100
 /** Vertical FOV matches the camera config in Scene.tsx. */
 const CAMERA_FOV_DEG = 45
 
-/** Fraction of the smaller viewport dimension Earth should fill on the hub. */
-const HUB_FILL_RATIO = 0.8
+/** Fraction of the smaller viewport dimension Earth should fill on the hub.
+ *  Zoomed in past 1 so the Earth reads as a large background horizon. */
+const HUB_FILL_RATIO = 1.3
+
+/** Where the Earth's horizon (its top edge) sits on the hub, as a fraction of
+ *  half the viewport height ABOVE center. 0.15 → the top arc crosses just above
+ *  the middle, so the Earth fills ~57% of the screen bottom on every device. */
+const HUB_HORIZON_ABOVE_CENTER = 0.15
 
 /**
  * Resolve a direction vector + fill ratio into a world-space camera
@@ -83,8 +89,20 @@ export function CameraDolly() {
     let position: [number, number, number]
     let lookAt: [number, number, number]
     if (activeModule === 'hub') {
+      // Zoomed-in horizon framing: the Earth sits low so only its top arc shows
+      // behind the wordmark. Pure pan (camera + target shift together) keeps it
+      // from rotating. We anchor the Earth's top edge (world y = +1) to a fixed
+      // screen fraction above center, so the horizon lands in the same place on
+      // a tall phone and a wide desktop (a fraction-of-viewport pan would push
+      // it far too low on mobile, where the viewport is much taller in world
+      // units).
       position = positionFromDirection([0, 0, 1], HUB_FILL_RATIO, aspect)
-      lookAt = [0, 0, 0]
+      const camDist = Math.hypot(position[0], position[1], position[2])
+      const halfFovRad = (CAMERA_FOV_DEG * Math.PI) / 180 / 2
+      const halfViewport = camDist * Math.tan(halfFovRad)
+      const panY = 1 - HUB_HORIZON_ABOVE_CENTER * halfViewport
+      position = [position[0], position[1] + panY, position[2]]
+      lookAt = [0, panY, 0]
     } else {
       const dolly = MODULES[activeModule].dolly
       position = positionFromDirection(dolly.direction, dolly.fillRatio, aspect)

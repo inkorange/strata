@@ -59,7 +59,7 @@ export function ReservoirGauges() {
   const content = (
     <aside
       aria-label="Carbon reservoir gauges"
-      className="pointer-events-auto fixed z-20 flex gap-2 rounded-lg border border-white/[0.08] bg-[#0d0a1f]/92 p-3 backdrop-blur-xl
+      className="pointer-events-auto fixed z-20 flex select-none gap-2 rounded-lg border border-white/[0.08] bg-[#0d0a1f]/92 p-3 backdrop-blur-xl
         top-16 inset-x-4 flex-row
         sm:top-24 sm:right-4 sm:left-auto sm:inset-x-auto sm:w-56 sm:flex-col"
     >

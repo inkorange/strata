@@ -88,11 +88,11 @@ export function Timeline() {
   }, [playing, setHour])
 
   const content = (
-    <div className="pointer-events-auto fixed z-20 bottom-4 inset-x-4 sm:left-80 sm:right-4 flex items-center gap-3 rounded-lg border border-border/40 bg-card/85 px-4 py-3 backdrop-blur">
+    <div className="pointer-events-auto fixed z-20 bottom-4 left-4 right-20 sm:left-80 sm:right-20 flex select-none items-center gap-3 rounded-lg border border-white/[0.08] bg-[#0d0a1f]/92 px-4 py-3 backdrop-blur-xl">
       <button
         type="button"
         onClick={() => togglePlaying()}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/60 bg-card text-foreground hover:bg-foreground/10"
+        className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.04] text-white/85 hover:bg-white/[0.1]"
         aria-label={playing ? 'Stop day cycle' : 'Play day cycle'}
         aria-pressed={playing}
       >
@@ -104,7 +104,7 @@ export function Timeline() {
           setDragging(true)
           updateFromClientX(e.clientX)
         }}
-        className="relative flex-1 h-2 rounded-full cursor-pointer"
+        className="relative flex-1 h-2 rounded-full cursor-pointer touch-none"
         style={{
           background:
             'linear-gradient(90deg, #1a3a5a 0%, #ff8c5a 25%, #ffd9a0 50%, #ff8c5a 75%, #1a3a5a 100%)',
@@ -121,7 +121,7 @@ export function Timeline() {
           aria-valuenow={hour}
         />
       </div>
-      <span className="text-xs text-foreground/80 font-mono tabular-nums w-12 text-right">
+      <span className="text-xs text-white/80 font-mono tabular-nums w-16 text-right">
         {formatHour(hour)}
       </span>
     </div>

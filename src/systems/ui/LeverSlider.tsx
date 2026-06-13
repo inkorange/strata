@@ -75,7 +75,7 @@ export function LeverSlider({
           setDragging(true)
           setFromClientX(e.clientX)
         }}
-        className="relative h-2 cursor-pointer rounded-full bg-white/[0.08]"
+        className="relative h-2 cursor-pointer touch-none rounded-full bg-white/[0.08]"
         role="slider"
         aria-label={label}
         aria-valuemin={min}

@@ -3,6 +3,7 @@
 import { cn } from '@/lib/utils'
 import { useStore } from '@/src/store'
 import { SCENARIO_LIST } from '@/src/systems/carbonModel'
+import { MAX_FOSSIL } from '@/src/systems/step'
 import { LeverSlider } from './LeverSlider'
 import { ReservoirGauges } from './ReservoirGauges'
 import { SystemsTimeline } from './SystemsTimeline'
@@ -23,7 +24,6 @@ export function SystemsBody() {
   const setFossilLever = useStore((s) => s.setFossilLever)
   const setLandLever = useStore((s) => s.setLandLever)
   const setScenario = useStore((s) => s.setScenario)
-  const reset = useStore((s) => s.resetSystems)
 
   return (
     <>
@@ -46,7 +46,7 @@ export function SystemsBody() {
           max={1}
           onChange={setFossilLever}
           accent={FOSSIL_ACCENT}
-          format={(v) => `${(v * 12).toFixed(1)} GtC/yr`}
+          format={(v) => `${(v * MAX_FOSSIL).toFixed(1)} GtC/yr`}
         />
         <LeverSlider
           label="Land use (plant ↔ clear forest)"
@@ -84,13 +84,6 @@ export function SystemsBody() {
             )
           })}
         </div>
-        <button
-          type="button"
-          onClick={() => reset()}
-          className="mt-1 self-start rounded-md border border-white/[0.12] bg-white/[0.03] px-3 py-1.5 text-[11px] font-medium text-white/75 hover:text-white hover:bg-white/[0.06]"
-        >
-          Reset
-        </button>
       </div>
 
       <ReservoirGauges />

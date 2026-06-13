@@ -3,6 +3,7 @@ import { AtmosphereBody } from '@/src/atmos/ui/AtmosphereBody'
 import { ChipBar } from '@/src/atmos/ui/ChipBar'
 import type { ModuleId } from '@/src/store/shellSlice'
 import { SystemsBody } from '@/src/systems/ui/SystemsBody'
+import { SystemsResetButton } from '@/src/systems/ui/SystemsResetButton'
 import { TectonicsBody } from '@/src/tectonics/ui/TectonicsBody'
 
 export interface ModuleDef {
@@ -74,5 +75,6 @@ export const MODULES: Record<Exclude<ModuleId, 'hub'>, ModuleDef> = {
     // Pulled back to show reservoir flows around Earth.
     dolly: { direction: [0, 0, 1], fillRatio: 0.55, lookAt: [0, 0, 0] },
     Body: SystemsBody,
+    HeaderAction: SystemsResetButton,
   },
 }
