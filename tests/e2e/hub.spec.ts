@@ -10,8 +10,11 @@ test('hub renders title, all three module cards, and a canvas', async ({ page })
 
   await expect(page.getByRole('heading', { level: 1, name: 'Strata' })).toBeVisible()
 
+  // Module entry cards (scoped so they don't collide with the TopNav pills,
+  // which are also links named after each module).
+  const cards = page.getByRole('navigation', { name: 'Module entry' })
   for (const label of ['Tectonics', 'Atmosphere', 'Earth Systems']) {
-    await expect(page.getByRole('link', { name: new RegExp(label) })).toBeVisible()
+    await expect(cards.getByRole('link', { name: new RegExp(label) })).toBeVisible()
   }
 
   // Canvas mounts under the Scene wrapper.

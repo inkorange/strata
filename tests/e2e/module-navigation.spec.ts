@@ -2,12 +2,17 @@ import { expect, test } from '@playwright/test'
 
 test('enter Tectonics from hub, see the module frame, return to hub', async ({ page }) => {
   await page.goto('/')
-  await page.getByRole('link', { name: /Tectonics/ }).click()
+  // Use the hub's module-entry card (the TopNav also has a Tectonics pill link).
+  await page
+    .getByRole('navigation', { name: 'Module entry' })
+    .getByRole('link', { name: /Tectonics/ })
+    .click()
   await expect(page).toHaveURL(/\/tectonics$/)
   await expect(page.getByRole('heading', { name: 'Present' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Start playthrough' })).toBeVisible()
 
-  await page.getByRole('link', { name: /Hub/ }).click({ force: true })
+  // The TopNav logo doubles as "home".
+  await page.getByRole('link', { name: 'Strata home' }).click()
   await expect(page).toHaveURL(/\/$/)
   await expect(page.getByRole('heading', { level: 1, name: 'Strata' })).toBeVisible()
 })
