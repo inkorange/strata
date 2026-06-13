@@ -21,7 +21,7 @@ const K_PHOTO = 0.2
 const K_OCEAN = 0.2
 
 /** Maximum human-driven fluxes (GtC/yr) at full lever deflection. */
-const MAX_FOSSIL = 12 // lithosphere -> atmosphere
+export const MAX_FOSSIL = 12 // lithosphere -> atmosphere
 const MAX_LAND = 4 // biosphere <-> atmosphere
 
 export interface FluxSet {
@@ -75,4 +75,28 @@ export function step(inputs: CarbonInputs, dtYears: number): Masses {
     biosphere: Math.max(0, m.biosphere + dBio * dtYears),
     lithosphere: Math.max(0, m.lithosphere + dLith * dtYears),
   }
+}
+
+/** Sub-step size (years) used when projecting to a target year. Small enough
+ *  for forward-Euler stability across the whole lever envelope. */
+const PROJECTION_DT = 0.5
+
+/**
+ * Deterministically project `seedMasses` forward `years` years at constant
+ * lever settings, integrating in PROJECTION_DT sub-steps. Pure — same inputs
+ * always give the same masses, which is what lets the timeline be SCRUBBED
+ * (drag to any year) rather than only played forward. `years` is clamped at 0.
+ */
+export function project(
+  seedMasses: Masses,
+  fossilLever: number,
+  landLever: number,
+  years: number,
+): Masses {
+  let m: Masses = { ...seedMasses }
+  const steps = Math.max(0, Math.round(years / PROJECTION_DT))
+  for (let i = 0; i < steps; i++) {
+    m = step({ masses: m, fossilLever, landLever }, PROJECTION_DT)
+  }
+  return m
 }
