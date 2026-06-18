@@ -65,40 +65,39 @@ export function Timeline() {
           const x = eraXPosition(era)
           const isActive = era.id === displayedEraId
           return (
-            <div
+            // The whole marker — dot AND label, with a padded hit area — is the
+            // clickable selector, so clicking the era name (not just the 3px
+            // dot) jumps to that era whether or not a playthrough is running.
+            <button
               key={era.id}
-              className="pointer-events-none absolute top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-2"
+              type="button"
+              onClick={() => setTargetEra(era.id)}
+              title={`${era.name}${era.mya > 0 ? ` (${era.mya} Mya)` : era.mya === 0 ? '' : ` (+${-era.mya} Myr)`}`}
+              aria-label={era.name}
+              className="group pointer-events-auto absolute top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-2 px-3 py-1"
               style={{ left: `${x * 100}%` }}
             >
-              <button
-                type="button"
-                onClick={() => setTargetEra(era.id)}
-                title={`${era.name}${era.mya > 0 ? ` (${era.mya} Mya)` : era.mya === 0 ? '' : ` (+${-era.mya} Myr)`}`}
-                aria-label={era.name}
-                className="pointer-events-auto block h-3 w-3"
-              >
-                <span
-                  className={cn(
-                    'pointer-events-none block h-3 w-3 rounded-full border',
-                    isActive
-                      ? 'bg-white border-white shadow-[0_0_8px_rgba(255,255,255,0.6)]'
-                      : 'bg-white/10 border-white/40 hover:bg-white/25',
-                  )}
-                />
-              </button>
+              <span
+                className={cn(
+                  'block h-3 w-3 rounded-full border transition-colors',
+                  isActive
+                    ? 'bg-white border-white shadow-[0_0_8px_rgba(255,255,255,0.6)]'
+                    : 'bg-white/10 border-white/40 group-hover:bg-white/25',
+                )}
+              />
               {/* Mobile: only the active era is labelled (6 labels collide on
                * a phone); desktop shows them all. The sidebar always names the
                * current era too. */}
               <span
                 className={cn(
-                  'pointer-events-none text-[10px] uppercase tracking-wider whitespace-nowrap',
+                  'text-[10px] uppercase tracking-wider whitespace-nowrap',
                   isActive ? 'text-white' : 'text-white/70',
                   !isActive && 'hidden sm:block',
                 )}
               >
                 {era.name}
               </span>
-            </div>
+            </button>
           )
         })}
       </div>
