@@ -58,6 +58,11 @@ export function TectonicsBody() {
         </div>
         <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
       </div>
+      {/* CC-BY attribution for the paleoshoreline + rotation data (required). */}
+      <p className="mt-4 text-[10px] leading-snug text-muted-foreground/60">
+        Paleoshorelines: Scotese &amp; Wright (2018) PALEOMAP PaleoDEMs (CC-BY 4.0). Plate
+        rotations: Müller et al. (2019), EarthByte (CC-BY).
+      </p>
       <Timeline />
     </>
   )
