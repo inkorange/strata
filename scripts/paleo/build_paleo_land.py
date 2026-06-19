@@ -15,13 +15,8 @@ Requires: pip install --user numpy xarray netCDF4 matplotlib shapely gplately py
 import os, re, json, zipfile, urllib.request, warnings
 
 warnings.filterwarnings("ignore")
-import numpy as np  # noqa: F401  (xarray backend)
+import numpy as np
 import xarray as xr
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-from shapely.geometry import Polygon
 from shapely.ops import unary_union
 
 CACHE = os.path.join(os.path.dirname(__file__), "_cache")
@@ -46,6 +41,7 @@ FUTURE_ID, FUTURE_AGE = "future", -50
 SEA_LEVEL = 0.0  # elevation threshold (m) for land
 MIN_AREA_DEG2 = 2.0  # drop islands smaller than this (deg^2) to keep it light
 SIMPLIFY_TOL = 0.7  # Douglas-Peucker tolerance (degrees)
+TILE_DEG = 20.0  # split landmasses into <=20deg tiles (see _tile_geom)
 
 
 def _download_dem():
@@ -68,11 +64,38 @@ def _nc_for_age(zf, age):
     return min(cand, key=lambda t: abs(t[0] - age))[1]
 
 
+def _tile_geom(geom):
+    """Split a (lon,lat) polygon into <=TILE_DEG tiles by intersecting with a
+    lat/lng grid. Planar earcut + sphere projection distorts and sags badly for
+    large polygons (e.g. globe-spanning Pangaea); bounding every piece to a small
+    cell keeps triangles small so the on-sphere fill stays put. Internal tile
+    seams are invisible (adjacent tiles share exact edges, same color)."""
+    from shapely.geometry import box
+
+    minx, miny, maxx, maxy = geom.bounds
+    pieces = []
+    x = TILE_DEG * np.floor(minx / TILE_DEG)
+    while x < maxx:
+        y = TILE_DEG * np.floor(miny / TILE_DEG)
+        while y < maxy:
+            cell = box(
+                max(-180.0, x), max(-90.0, y), min(180.0, x + TILE_DEG), min(90.0, y + TILE_DEG)
+            )
+            inter = geom.intersection(cell)
+            if not inter.is_empty:
+                sub = list(inter.geoms) if inter.geom_type.startswith("Multi") else [inter]
+                for g in sub:
+                    if g.geom_type == "Polygon" and g.area > 0.05:
+                        pieces.append(g)
+            y += TILE_DEG
+        x += TILE_DEG
+    return pieces
+
+
 def _clean_to_rings(polys):
-    """Union overlapping/adjacent polygons, drop tiny ones, simplify, and emit
-    closed [lat,lng] rings. Shared by the DEM and future-projection paths so
-    both produce clean, deduplicated, lightweight landmasses. Input polygons use
-    (lon, lat) coordinates; output rings are [lat, lng]."""
+    """Union overlapping/adjacent polygons, drop tiny ones, simplify, tile, and
+    emit closed [lat,lng] rings. Shared by the DEM and future-projection paths.
+    Input polygons use (lon, lat); output rings are [lat, lng]."""
     polys = [p for p in (q.buffer(0) for q in polys) if not p.is_empty]
     if not polys:
         return []
@@ -85,25 +108,51 @@ def _clean_to_rings(polys):
         s = g.simplify(SIMPLIFY_TOL, preserve_topology=True)
         if s.is_empty:
             continue
-        coords = list(s.exterior.coords)
-        ring = [[round(float(y), 2), round(float(x), 2)] for x, y in coords]
-        if len(ring) >= 4:
-            rings.append(ring)
+        for tile in _tile_geom(s):
+            coords = list(tile.exterior.coords)
+            ring = [[round(float(y), 2), round(float(x), 2)] for x, y in coords]
+            if len(ring) >= 4:
+                rings.append(ring)
     return rings
 
 
 def _rings_from_grid(lon, lat, Z):
-    """Return [lat,lng] rings for land (Z >= SEA_LEVEL) via filled-contour polys."""
-    cs = plt.contourf(lon, lat, Z, levels=[SEA_LEVEL, 1e9])
-    polys = []
-    for p in cs.get_paths():
-        for ring in p.to_polygons():
-            if len(ring) >= 4:
-                poly = Polygon(ring)
-                if poly.is_valid and poly.area > 0:
-                    polys.append(poly)
-    plt.close("all")
-    return _clean_to_rings(polys)
+    """Return [lat,lng] rings for land (Z >= SEA_LEVEL).
+
+    Built by unioning the land grid CELLS (run-length strips per latitude row),
+    not by contouring. matplotlib's contourf.to_polygons() shatters and drops
+    landmasses that touch the grid boundary / dateline (it lost all of Eurasia
+    and North America); cell-union is topology-robust. Coastlines come out
+    stair-stepped at grid resolution, then simplified smooth."""
+    from shapely.geometry import box
+
+    lon = np.asarray(lon)
+    lat = np.asarray(lat)
+    Z = np.asarray(Z)
+    hx = abs(float(lon[1] - lon[0])) / 2.0
+    hy = abs(float(lat[1] - lat[0])) / 2.0
+    mask = Z >= SEA_LEVEL  # [nlat, nlon]
+    boxes = []
+    for j in range(mask.shape[0]):
+        row = mask[j]
+        i = 0
+        n = row.shape[0]
+        # Clamp polar/edge cell extents to valid lat/lng (a -90 row would
+        # otherwise reach -90.5, an invalid latitude downstream).
+        y0 = max(-90.0, lat[j] - hy)
+        y1 = min(90.0, lat[j] + hy)
+        while i < n:
+            if row[i]:
+                k = i
+                while k + 1 < n and row[k + 1]:
+                    k += 1
+                x0 = max(-180.0, lon[i] - hx)
+                x1 = min(180.0, lon[k] + hx)
+                boxes.append(box(x0, y0, x1, y1))
+                i = k + 1
+            else:
+                i += 1
+    return _clean_to_rings(boxes)
 
 
 def _land_from_dem(zf, age):
@@ -118,34 +167,48 @@ def _land_from_dem(zf, age):
 
 
 def _future_land(present_rings):
-    """Project present-day land rings forward 50 My by plate stage rotation."""
+    """Project present-day land forward 50 My so it looks like today's continents
+    just shifted. Each present-day land tile is moved RIGIDLY by the plate under
+    its centroid (no cookie-cutting at plate boundaries — that shatters
+    continents into choppy fragments). Tiles of the same continent share a plate,
+    so they move together and stay coherent."""
     import gplately
     import pygplates
 
     gd = gplately.DataServer("Muller2019")
     rot, _topo, static = gd.get_plate_reconstruction_files()
-    moved_polys = []
-    for ring in present_rings:
-        pts = [pygplates.PointOnSphere(lat, lng) for lat, lng in ring]
-        if len(pts) < 4:
-            continue
-        feat = pygplates.Feature()
-        feat.set_geometry(pygplates.PolygonOnSphere(pts))
-        partitioned = pygplates.partition_into_plates(static, rot, [feat])
-        for pf in partitioned:
-            pid = pf.get_reconstruction_plate_id()
-            stage = rot.get_rotation(0, pid, 1)  # 1 Ma -> 0 Ma finite rotation
+    partitioner = pygplates.PlatePartitioner(static, rot)  # present-day plates
+
+    fwd_cache = {}
+
+    def fwd_for(pid):
+        if pid not in fwd_cache:
+            stage = rot.get_rotation(0, pid, 1)  # 1 Ma -> 0 Ma stage rotation
             pole, angle = stage.get_euler_pole_and_angle()
-            fwd = pygplates.FiniteRotation(pole, angle * 50.0)  # extrapolate +50 My
-            # A partitioned feature can hold zero-or-many geometries; iterate all.
-            for geom in pf.get_all_geometries():
-                if geom is None:
-                    continue
-                ll = (fwd * geom).to_lat_lon_list()  # [(lat,lng),...]
-                if len(ll) >= 4:
-                    moved_polys.append(Polygon([(lo, la) for la, lo in ll]))  # (lon,lat)
-    # Re-merge the per-plate fragments into clean landmasses (dedupe slivers).
-    return _clean_to_rings(moved_polys)
+            fwd_cache[pid] = pygplates.FiniteRotation(pole, angle * 50.0)  # +50 My
+        return fwd_cache[pid]
+
+    out_rings = []
+    for ring in present_rings:
+        clat = sum(p[0] for p in ring) / len(ring)
+        clng = sum(p[1] for p in ring) / len(ring)
+        res = partitioner.partition_point(pygplates.PointOnSphere(clat, clng))
+        pid = 0
+        if res is not None:
+            try:
+                pid = res.get_feature().get_reconstruction_plate_id()
+            except Exception:
+                pid = 0
+        fwd = fwd_for(pid)
+        moved = []
+        for lat, lng in ring:
+            la, lo = (fwd * pygplates.PointOnSphere(lat, lng)).to_lat_lon()
+            moved.append([round(la, 2), round(lo, 2)])
+        los = [p[1] for p in moved]
+        if max(los) - min(los) > 180:  # wrapped across the dateline; skip to avoid smear
+            continue
+        out_rings.append(moved)
+    return out_rings
 
 
 def main():
