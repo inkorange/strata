@@ -1,11 +1,12 @@
 'use client'
 
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { MODULES } from '@/src/shell/modules'
-import type { ModuleId } from '@/src/store/shellSlice'
 import { useStore } from '@/src/store'
+import type { ModuleId } from '@/src/store/shellSlice'
 import { LogoMark } from './icons/LogoMark'
 import { SettingsIcon } from './icons/SettingsIcon'
 import { TierToggle } from './TierToggle'
@@ -29,8 +30,14 @@ const MODULE_LIST = Object.values(MODULES)
  * stays under one row of viewport width.
  */
 export function TopNav() {
-  const activeModule = useStore((s) => s.activeModule)
   const setActiveModule = useStore((s) => s.setActiveModule)
+
+  // Highlight from the URL, not the store: pathname is identical on the server
+  // and client, so a refresh on a module route stays highlighted. The store's
+  // activeModule (which drives the 3D scene) is restored separately via
+  // ClientShellInit but isn't reliable for SSR markup on a hard refresh.
+  const pathname = usePathname()
+  const activeId: ModuleId = pathname === '/' ? 'hub' : (pathname.slice(1) as ModuleId)
 
   const [settingsOpen, setSettingsOpen] = useState(false)
   const settingsRef = useRef<HTMLDivElement | null>(null)
@@ -59,11 +66,7 @@ export function TopNav() {
         className="pointer-events-auto flex items-center gap-0.5 rounded-2xl border border-white/[0.08] bg-[#0d0a1f]/95 p-1 backdrop-blur-xl shadow-[0_6px_24px_rgba(0,0,0,0.45)]"
         aria-label="Primary"
       >
-        <TabLink
-          href="/"
-          active={activeModule === 'hub'}
-          onClick={() => setActiveModule('hub')}
-        >
+        <TabLink href="/" active={activeId === 'hub'} onClick={() => setActiveModule('hub')}>
           <LogoMark className="h-4 w-4" />
           <span className="hidden text-sm font-semibold tracking-tight sm:inline">Strata</span>
           <span className="text-sm font-semibold tracking-tight sm:hidden">Home</span>
@@ -77,7 +80,7 @@ export function TopNav() {
             accent={mod.accentHex}
             label={mod.label}
             shortLabel={mod.shortLabel}
-            active={activeModule === mod.id}
+            active={activeId === mod.id}
             onClick={() => setActiveModule(mod.id)}
           />
         ))}

@@ -27,3 +27,4 @@ test-results/
 *.log
 
 .superpowers/
+scripts/paleo/_cache/

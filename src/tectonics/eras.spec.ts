@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { type ContinentId, ERAS, type Era, type PlateAtEra, type PlateId } from './eras'
+import { ERAS, type Era, type PlateAtEra, type PlateId } from './eras'
 
 const REQUIRED_PLATE_IDS: ReadonlyArray<PlateId> = [
   'pacific',
@@ -74,51 +74,23 @@ describe('ERAS', () => {
   })
 })
 
-const REQUIRED_CONTINENT_IDS: ReadonlyArray<ContinentId> = [
-  'north-america',
-  'south-america',
-  'eurasia',
-  'africa',
-  'india',
-  'australia',
-  'antarctica',
-]
-
-describe('ERAS continents', () => {
-  it.each(REQUIRED_ERA_IDS)('era %s has all seven continents', (eraId) => {
+describe('ERAS land', () => {
+  it.each(REQUIRED_ERA_IDS)('era %s has non-empty paleo land polygons', (eraId) => {
     const era = ERAS.find((e) => e.id === eraId)
     expect(era).toBeDefined()
     if (!era) return
-    const continentIds = era.continents.map((c) => c.id).sort()
-    expect(continentIds).toEqual([...REQUIRED_CONTINENT_IDS].sort())
+    expect(era.land.length).toBeGreaterThan(0)
   })
 
-  it.each(
-    REQUIRED_CONTINENT_IDS,
-  )('continent %s has consistent piece count + per-piece vertex counts across eras', (continentId) => {
-    // For each era, get the shape: [piece0VertCount, piece1VertCount, ...]
-    const pieceShapes = ERAS.map((era) => {
-      const cont = era.continents.find((c) => c.id === continentId)
-      return cont ? cont.polygons.map((p) => p.length) : []
-    })
-    const first = pieceShapes[0]
-    if (!first) return
-    expect(first.length).toBeGreaterThan(0)
-    for (const shape of pieceShapes) {
-      expect(shape).toEqual(first)
-    }
-  })
-
-  it('every continent vertex has valid lat/lng range', () => {
+  it('every land ring has >=4 points and valid lat/lng', () => {
     for (const era of ERAS) {
-      for (const continent of era.continents) {
-        for (const piece of continent.polygons) {
-          for (const [lat, lng] of piece) {
-            expect(lat).toBeGreaterThanOrEqual(-90)
-            expect(lat).toBeLessThanOrEqual(90)
-            expect(lng).toBeGreaterThanOrEqual(-180)
-            expect(lng).toBeLessThanOrEqual(180)
-          }
+      for (const ring of era.land) {
+        expect(ring.length).toBeGreaterThanOrEqual(4)
+        for (const [lat, lng] of ring) {
+          expect(lat).toBeGreaterThanOrEqual(-90)
+          expect(lat).toBeLessThanOrEqual(90)
+          expect(lng).toBeGreaterThanOrEqual(-180)
+          expect(lng).toBeLessThanOrEqual(180)
         }
       }
     }
