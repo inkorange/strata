@@ -5,30 +5,26 @@ import { useEffect, useState } from 'react'
 import { usePrefersReducedMotion } from '@/src/lib/accessibility'
 import { useStore } from '@/src/store'
 import { CONTINENT_COLOR, ERAS_BY_ID, PLATE_COLORS, type PlateId } from '../eras'
-import {
-  type TweenedContinent,
-  type TweenedPlate,
-  tweenContinents,
-  tweenPlates,
-} from '../tweenPlates'
-import { Continent } from './Continent'
+import { type LandLayer, landLayers } from '../landLayers'
+import { type TweenedPlate, tweenPlates } from '../tweenPlates'
+import { Land } from './Land'
 import { Plate } from './Plate'
 
 const TWEEN_DURATION_MS = 5000
 
 /**
- * R3F group that renders the seven plates and seven continent landmasses when
- * activeModule === 'tectonics'. Each frame, computes the tween progress between
- * currentEraId and targetEraId, and passes interpolated vertices to each child.
+ * R3F group that renders the seven plate outlines (vertex-morphed) and the
+ * era's landmasses (crossfaded) when activeModule === 'tectonics'.
+ *
+ * Plates SLERP-morph between eras (matched vertex counts). Continents are real
+ * per-era paleoshorelines with independent geometry, so they CROSSFADE instead:
+ * during a transition the source era's land fades out while the target's fades
+ * in. Each frame recomputes tween progress and pushes both to the children.
  *
  * Visual layering:
  *   TectonicsOcean: radius 1.0 (dark blue ocean base)
- *   Continent fills: radius 1.003 (green-tan landmasses above ocean)
- *   Plate outlines:  radius 1.008 (colored outlines above continents)
- *
- * Pedagogically, continents show WHERE the land is; plate outlines show WHERE
- * the tectonic boundaries are — which don't match, because plates extend into
- * the surrounding oceans.
+ *   Land fills:     radius 1.003 (paleoshoreline landmasses above ocean)
+ *   Plate outlines: radius 1.008 (colored outlines above land)
  */
 export function Plates() {
   const activeModule = useStore((s) => s.activeModule)
@@ -41,17 +37,17 @@ export function Plates() {
   const [tweenedPlates, setTweenedPlates] = useState<ReadonlyArray<TweenedPlate>>(() =>
     tweenPlates(ERAS_BY_ID[currentEraId], ERAS_BY_ID[currentEraId], 1),
   )
-  const [tweenedContinents, setTweenedContinents] = useState<ReadonlyArray<TweenedContinent>>(() =>
-    tweenContinents(ERAS_BY_ID[currentEraId], ERAS_BY_ID[currentEraId], 1),
+  const [landRender, setLandRender] = useState<ReadonlyArray<LandLayer>>(() =>
+    landLayers(currentEraId, null, 0),
   )
 
   useEffect(() => {
     if (targetEraId === null) {
       setTweenedPlates(tweenPlates(ERAS_BY_ID[currentEraId], ERAS_BY_ID[currentEraId], 1))
-      setTweenedContinents(tweenContinents(ERAS_BY_ID[currentEraId], ERAS_BY_ID[currentEraId], 1))
+      setLandRender(landLayers(currentEraId, null, 0))
     } else if (prefersReducedMotion) {
       setTweenedPlates(tweenPlates(ERAS_BY_ID[currentEraId], ERAS_BY_ID[targetEraId], 1))
-      setTweenedContinents(tweenContinents(ERAS_BY_ID[currentEraId], ERAS_BY_ID[targetEraId], 1))
+      setLandRender(landLayers(currentEraId, targetEraId, 1))
       finishTween()
     }
   }, [currentEraId, targetEraId, prefersReducedMotion, finishTween])
@@ -64,10 +60,8 @@ export function Plates() {
     const raw = Math.min(elapsed / TWEEN_DURATION_MS, 1)
     const eased = raw * raw * (3 - 2 * raw)
 
-    const source = ERAS_BY_ID[currentEraId]
-    const target = ERAS_BY_ID[targetEraId]
-    setTweenedPlates(tweenPlates(source, target, eased))
-    setTweenedContinents(tweenContinents(source, target, eased))
+    setTweenedPlates(tweenPlates(ERAS_BY_ID[currentEraId], ERAS_BY_ID[targetEraId], eased))
+    setLandRender(landLayers(currentEraId, targetEraId, eased))
 
     if (raw >= 1) finishTween()
   })
@@ -76,8 +70,13 @@ export function Plates() {
 
   return (
     <group>
-      {tweenedContinents.map((continent) => (
-        <Continent key={continent.id} polygons={continent.polygons} color={CONTINENT_COLOR} />
+      {landRender.map((layer) => (
+        <Land
+          key={layer.key}
+          polygons={layer.polygons}
+          color={CONTINENT_COLOR}
+          opacity={layer.opacity}
+        />
       ))}
       {tweenedPlates.map((plate) => (
         <Plate key={plate.id} vertices={plate.vertices} color={PLATE_COLORS[plate.id as PlateId]} />
