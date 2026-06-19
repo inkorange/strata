@@ -35,5 +35,5 @@ export function Plate({ vertices, color }: PlateProps) {
 
   if (outlinePoints.length === 0) return null
 
-  return <Line points={outlinePoints} color={color} lineWidth={2.5} transparent opacity={0.9} />
+  return <Line points={outlinePoints} color={color} lineWidth={2.5} transparent opacity={0.25} />
 }

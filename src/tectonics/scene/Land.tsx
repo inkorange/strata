@@ -4,8 +4,13 @@ import { useMemo } from 'react'
 import * as THREE from 'three'
 import { triangulatePolygonOnSphere } from '../sphericalGeometry'
 
-const LAND_RADIUS = 1.003
-const SUBDIVISION_LEVELS = 2
+// Lifted further above the ocean (radius 1.0) than the old continents and
+// subdivided more, because the paleo polygons are coarse (few vertices → big
+// earcut triangles). Without this, a large triangle's interior bows below the
+// ocean sphere (chord sag) and the ocean shows through as dark "flooded" patches.
+// Kept below the plate outlines at 1.008.
+const LAND_RADIUS = 1.006
+const SUBDIVISION_LEVELS = 3
 
 interface LandProps {
   polygons: ReadonlyArray<ReadonlyArray<readonly [number, number]>>
@@ -52,6 +57,12 @@ export function Land({ polygons, color, opacity }: LandProps) {
 
   if (pieces.length === 0 || opacity <= 0) return null
 
+  // At rest the land is fully OPAQUE so it renders in the opaque pass and the
+  // cloud layer (transparent, larger radius, depthWrite:false) draws over it —
+  // continents sit under the clouds, as on the real Earth. Only during an
+  // era crossfade (opacity < 1) does it go transparent.
+  const opaque = opacity >= 1
+
   return (
     <group>
       {pieces.map(({ geom, key }) => (
@@ -60,9 +71,9 @@ export function Land({ polygons, color, opacity }: LandProps) {
             color={color}
             metalness={0.05}
             roughness={0.95}
-            transparent
+            transparent={!opaque}
             opacity={opacity}
-            depthWrite={opacity > 0.98}
+            depthWrite={opaque}
           />
         </mesh>
       ))}

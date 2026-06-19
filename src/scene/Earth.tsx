@@ -126,10 +126,10 @@ export function Earth() {
       </mesh>
 
       {/* Cloud layer: slightly larger sphere with alpha-from-luminance.
-       * Stays visible in tectonics mode for atmospheric realism — clouds
-       * don't carry continent shapes, so they don't conflict with the
-       * paleogeographic polygons rendered on top. */}
-      <mesh scale={1.015}>
+       * renderOrder keeps the clouds painting AFTER the tectonics land even
+       * while the land is transparent mid-era-crossfade, so continents stay
+       * under the clouds throughout (otherwise they pop above during the fade). */}
+      <mesh scale={1.015} renderOrder={2}>
         <sphereGeometry args={[1, preset.earth.cloudSegments, preset.earth.cloudSegments]} />
         <meshStandardMaterial
           ref={cloudMatRef}
