@@ -1,9 +1,16 @@
 # Strata — Design Document
 
-**Status:** Approved design for v1
-**Date:** 2026-05-24
+**Status:** Approved design for v1 · **as-built state tracked in §14**
+**Date:** 2026-05-24 (design) · last reconciled with code 2026-06-19
 **Host:** strata.chriswest.tech
 **Sibling project:** Molecular (`github.com/inkorange/molecular`, molecular.chriswest.tech)
+
+> **Reading this doc:** §1–§13 are the original approved design intent. Where the
+> shipped product diverges from that intent — and it does, deliberately, for the
+> three modules — **§14 (Implementation Notes — As Built)** is the source of
+> truth. Start there for what actually exists today: the per-era continent
+> rendering pipeline, and each module's real control surface (including the
+> Atmosphere season selector).
 
 > Strata is the earth-science counterpart to Molecular. It deliberately reuses
 > Molecular's design language, tier system, stack, and component grammar so the
@@ -493,6 +500,186 @@ the rationale survives.
 6. **Name & host — Strata, at `strata.chriswest.tech`.** Confirmed. Single
    evocative noun in the Molecular mold; implies layers and depth; reads well
    lowercase as a logo.
+
+---
+
+## 14. Implementation Notes — As Built (v1)
+
+This section records what actually shipped, where it diverges from the §1–§13
+intent, and the technical specifics that aren't obvious from the design alone.
+The headline divergence: the three modules landed as **observe-and-scrub
+viewers** built around a shared scene + timeline + tier grammar, not the
+free-form "drag to build" sandboxes the early design sketched. Each module gives
+the user a small, well-chosen set of controls over a scientifically-honest model
+and lets them watch cause-and-effect play out, rather than assembling a scene
+from scratch. The shell, tier system, palette, and persistent-scene dolly are as
+designed.
+
+### 14.1 Shell & hub
+
+- **Hub** (`src/shell/HubPage.tsx`): a "Strata" wordmark hero set in **Gajraj
+  One**, the Earth framed low and zoomed (we see the top of the globe on the
+  horizon), and the three module cards laid out **horizontally across the bottom
+  half** on desktop (stacked on mobile).
+- **Top nav** (`src/ui/TopNav.tsx`): one bar with the logo, the three module
+  pills, and a settings popover that holds the **tier toggle**
+  (`src/ui/TierToggle.tsx`). The active-module highlight is derived from
+  `usePathname()`, not store state — so it is SSR-consistent and survives a hard
+  refresh (the store value renders as `hub` on the server and used to drop the
+  highlight on reload).
+- **Module frame** (`src/shell/ModuleFrame.tsx`): a left sidebar on desktop
+  (`w-80`) / a floating bottom card on mobile, with a per-module accent strip.
+  The header row `flex-wrap`s so a wide `headerAction` (the Atmosphere layer
+  chips) drops below the title instead of overflowing the narrow card.
+- **AI tutor** (`src/ui/TutorPanel.tsx`) is present as a collapsible panel.
+- **Not built in v1:** share-link / `/s/[hash]`, and undo/redo — the viewer
+  modules have no free-form authored state worth serializing, so these were
+  dropped from scope rather than stubbed.
+
+### 14.2 Tectonics — era viewer + per-era paleo-coastline rendering
+
+The shipped Tectonics module is a **geologic-time era viewer**: the user scrubs a
+timeline across six eras and watches the continents and plates transform. This
+replaces the original §2 "drag plates to form convergent/divergent/transform
+boundaries" sandbox.
+
+**Eras** (`src/tectonics/eras.ts`): Pangaea (250 Ma), Late Jurassic (150 Ma),
+Late Cretaceous (90 Ma), Eocene (50 Ma), Present (0), and a **Future projection
+(+50 My, stored as `mya: -50`)** — six in total.
+
+**Why this was hard / what makes it real.** The earlier viewer reused the *same*
+modern continent outline in every era and merely repositioned it, so the
+continents never actually changed shape. v1 fixes that with **true
+paleoshorelines per era**, baked offline:
+
+- **Data:** Scotese & Wright (2018) PALEOMAP PaleoDEMs (Zenodo
+  `10.5281/zenodo.5460860`, **CC-BY 4.0**), 1°×1° elevation NetCDF grids, one per
+  age. The future era uses **Müller et al. (2019)** plate rotations via
+  `gplately` / `pyGPlates` (**CC-BY**). Attribution is shown in the sidebar
+  (`src/tectonics/ui/TectonicsBody.tsx`) — keep it.
+- **Offline pipeline** (`scripts/paleo/build_paleo_land.py`, run manually; bakes
+  `src/tectonics/paleoLand.generated.json`, consumed as `Era.land`). Steps:
+  1. **Threshold** each era's DEM at sea level (≥ 0 m) → a land mask.
+  2. **Polygonize by cell-union**, not contouring: union the land grid *cells*
+     (run-length strips per latitude row → `shapely.unary_union`). matplotlib's
+     `contourf` shattered and silently dropped every landmass touching the grid
+     boundary / dateline (it lost all of Eurasia and North America); cell-union
+     is topology-robust. Polar/edge cell extents are clamped to valid
+     lat/lng so a −90 row can't reach −90.5.
+  3. **Smooth:** Douglas–Peucker simplify (0.7°) → **Chaikin corner-cutting (2
+     passes)** to round the 1° grid stair-steps into curves → light re-simplify
+     (0.25°). Smoothing happens per-polygon on the exterior *before* tiling, so
+     the outer coast is curved while internal tile seams stay straight.
+  4. **Tile** each landmass into ≤20° pieces (grid intersection). Planar earcut
+     over a large polygon, re-projected onto the sphere, sags below the ocean
+     (chord sag → dark "flooded" patches); bounding every piece to a small cell
+     keeps triangles small so the fill stays on the surface. Adjacent tiles share
+     exact edges and color, so the seams are invisible.
+  5. **Future era:** project present-day land forward 50 My by moving each tile
+     **rigidly** by the plate under its centroid (`PlatePartitioner.partition_point`
+     → plate id → stage rotation × 50). Per-plate rigid motion (vs. cookie-cutting
+     at plate boundaries) keeps whole continents coherent instead of shattering
+     them into choppy fragments. Dateline-wrapping rings are skipped to avoid
+     smear.
+  - Islands < 2 deg² are dropped to keep the payload light; rings are emitted as
+    `[lat, lng]` rounded to 0.01°.
+
+**Runtime rendering** (`src/tectonics/scene/Land.tsx`): each polygon piece is
+triangulated on the sphere (`triangulatePolygonOnSphere`) at radius **1.006**
+with **3 subdivision levels** and radial outward normals. Land is **opaque at
+rest** so it renders in the opaque pass and the transparent cloud shell (larger
+radius, `depthWrite: false`, `renderOrder` above land) draws *over* it — the
+continents sit *under* the clouds, as on the real Earth. Plate outlines render
+just above at radius 1.008 at **25% opacity** (the plate boundaries are still the
+older hand-authored 7-plate abstraction and don't perfectly trace the new
+coastlines — a known follow-up).
+
+**Transitions are different for land vs. plates** — this is the key subtlety:
+
+- **Continents crossfade** (`src/tectonics/landLayers.ts`): paleoshorelines are
+  independent geometry per era with no vertex correspondence, so we fade the
+  source era out and the target in (`opacity < 1` flips land to the transparent
+  pass for the duration of the tween only).
+- **Plates morph** (`src/tectonics/tweenPlates.ts`): plate polygons *do* keep
+  matching vertex counts across eras, so each vertex SLERPs along the
+  great-circle arc — a true positional morph.
+
+**Controls:** an era **Timeline scrubber** (`src/tectonics/ui/Timeline.tsx`) with
+clickable era markers — the whole dot-plus-label hit area is the button, so
+clicking an era name jumps straight to it whether or not a playthrough is running
+— plus a Play/Stop button that animates through the eras. Sidebar copy is
+tier-aware (Beginner / Standard / Advanced).
+
+**Known follow-ups:** plate outlines don't yet match the new coastlines (kept at
+25%); land renders one mesh per tile (hundreds per era), which is a perf and
+e2e-load cost — merging tiles into one mesh per era is the planned optimization.
+
+### 14.3 Atmosphere — day-cycle viewer + season control
+
+The shipped Atmosphere module is a **24-hour day-cycle + general-circulation
+viewer**, not the front-building sandbox of the original §2. The user scrubs the
+sun across a day, picks a season, and peels visualization layers.
+
+**Model** (`src/atmos/solar.ts`): heliocentric — the sun is fixed at world +X and
+the Earth spins on its **23.44° tilted axis** (`EARTH_TILT_RAD`, the single
+source of truth shared between the solar math and the tilted Earth mesh). The
+subsolar point sweeps longitude with the hour; the day/night terminator follows
+from it.
+
+**Controls:**
+
+- **Day-cycle Timeline scrubber** (`src/atmos/ui/Timeline.tsx`) with Play/Stop —
+  advances the sun across 24 hours.
+- **Season selector** (`src/atmos/ui/AtmosphereBody.tsx`): **Equinox / June /
+  December**. This sets the subsolar latitude to **0° / +23.44° (Tropic of
+  Cancer) / −23.44° (Tropic of Capricorn)** — i.e. tilts Earth's axis toward or
+  away from the sun — which in turn shifts the bright equatorial cloud band
+  (ITCZ), the surface-temperature gradient, and the wind belts toward the summer
+  hemisphere. (Both equinoxes look identical from a single-day view, so only one
+  is exposed.)
+- **Layer chips** (`src/atmos/ui/ChipBar.tsx`), rendered in the ModuleFrame
+  `headerAction` beside the title: **Cells** (convection cells / wind belts),
+  **Temperature** (surface heatmap), **Clouds** (equatorial cloud band) — each
+  toggles its store layer independently.
+- **Hover inspect** (`src/atmos/ui/InspectReadout.tsx` +
+  `scene/HoverInspector.tsx`): hover any point on the globe to read local
+  conditions, tier-aware.
+- **Legend** (`src/atmos/ui/Legend.tsx`) for the wind belts / doldrums.
+
+### 14.4 Earth Systems — carbon-cycle sandbox
+
+The closest module to its original §2 intent, extended. A
+**mass-conservation carbon engine** (`src/systems/carbonModel.ts`,
+`src/systems/step.ts`) moves carbon between **four reservoirs** (atmosphere,
+ocean, biosphere, lithosphere); the ocean and biosphere act as sinks with
+negative feedback, so carbon never disappears, it relocates.
+
+**Controls** (`src/systems/ui/SystemsBody.tsx`):
+
+- **Two forcing levers** (`LeverSlider.tsx`, a track-and-knob mirroring the
+  Atmosphere scrubber grammar): **Fossil-fuel emissions** (0 … `MAX_FOSSIL`
+  GtC/yr) and **Land use** (reforesting ↔ neutral ↔ deforesting).
+- **Scenario presets** (`SCENARIO_LIST`, three presets) plus a **Reset** button
+  mounted in the ModuleFrame header (`SystemsResetButton.tsx`).
+- **Year-based playback Timeline** (`SystemsTimeline.tsx`) — draggable *and*
+  playable; the projection is deterministic so scrubbing and playing agree.
+- **Reservoir gauges** (`ReservoirGauges.tsx`), tier-aware.
+
+**Scene** (`src/systems/scene/`): carbon-flow particles (`CarbonFlows.tsx`) and
+reservoir volumes (`Reservoirs.tsx`), plus a **"dying-planet" degradation**
+visual — the land browns and clouds turn smoggy as atmospheric carbon rises above
+the active scenario's starting point.
+
+### 14.5 Module-control quick reference
+
+| Module | Primary control | Secondary controls | Time axis |
+| --- | --- | --- | --- |
+| **Tectonics** | Era timeline (6 eras, clickable markers) | — | geologic, Play/Stop through eras |
+| **Atmosphere** | Day-cycle scrubber | **Season** (Equinox/June/December); layer chips (Cells/Temperature/Clouds); hover-inspect | 24-hour day, Play/Stop |
+| **Earth Systems** | Two levers (fossil-fuel, land use) | Scenario presets + Reset; reservoir gauges | year-based, draggable + Play/Stop |
+
+All three share the tier toggle, the persistent globe scene, and the
+bottom-anchored timeline grammar.
 
 ---
 
