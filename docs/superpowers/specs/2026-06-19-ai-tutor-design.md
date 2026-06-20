@@ -28,9 +28,11 @@ fits and keeps the two apps readable as a matched set.
 
 - **Text-only streaming.** No "highlight" tool calls in v1 (the §8 idea of pulsing
   a referenced scene object is deferred). Matches Molecular's shipped tutor.
-- **Reuse Molecular's gateway key.** The AI SDK reads `AI_GATEWAY_API_KEY` from
-  the environment automatically; Strata's `.env.local` carries the same
-  team-level key value Molecular uses.
+- **Dedicated Strata gateway key.** The AI SDK reads `AI_GATEWAY_API_KEY` from
+  the environment automatically; Strata uses its own AI Gateway key (separate
+  from Molecular's) so cost, rate limits, and rotation are tracked per app. Held
+  in `.env.local` (gitignored) locally and as a Vercel project env var in
+  production.
 - **Stateless per question.** Each request sends only the latest question + a
   fresh scene summary — no multi-turn history replay. Cheap, simple, sufficient
   for scene Q&A. (Matches Molecular.)
@@ -44,7 +46,7 @@ fits and keeps the two apps readable as a matched set.
 | Tutor state | `src/tutor/tutorSlice.ts` | new (port) | `messages`, `streaming` + actions; wired into `src/store/index.ts` |
 | Scene summarizer | `src/tutor/sceneToPrompt.ts` | new (Strata-specific) | Pure function: store snapshot → short grounding string per module |
 | Chat UI | `src/ui/TutorPanel.tsx` | rewrite stub | Stream into store, render messages, suggestion chips, input, error handling; keep existing FAB + panel chrome |
-| Env | `.env.local` | new (gitignored) | `AI_GATEWAY_API_KEY` copied from Molecular |
+| Env | `.env.local` | new (gitignored) | dedicated Strata `AI_GATEWAY_API_KEY` (+ Vercel project env var for prod) |
 | Dep | `package.json` | changed | add `ai` ^6 |
 
 ### 3.1 API route — `app/api/tutor/route.ts`
