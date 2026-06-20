@@ -17,6 +17,7 @@ import os, re, json, zipfile, urllib.request, warnings
 warnings.filterwarnings("ignore")
 import numpy as np
 import xarray as xr
+from shapely.geometry import Polygon
 from shapely.ops import unary_union
 
 CACHE = os.path.join(os.path.dirname(__file__), "_cache")
@@ -40,8 +41,33 @@ FUTURE_ID, FUTURE_AGE = "future", -50
 
 SEA_LEVEL = 0.0  # elevation threshold (m) for land
 MIN_AREA_DEG2 = 2.0  # drop islands smaller than this (deg^2) to keep it light
-SIMPLIFY_TOL = 0.7  # Douglas-Peucker tolerance (degrees)
+SIMPLIFY_TOL = 0.7  # Douglas-Peucker tolerance (degrees) before smoothing
+SMOOTH_ITERS = 2  # Chaikin corner-cutting passes (rounds the 1deg grid stair-steps)
+POST_SMOOTH_TOL = 0.25  # light re-simplify after smoothing to trim redundant points
 TILE_DEG = 20.0  # split landmasses into <=20deg tiles (see _tile_geom)
+
+
+def _chaikin(coords, iters):
+    """Chaikin corner-cutting smoothing of a closed ring of (x, y) points.
+    Each pass replaces every vertex with two points at 1/4 and 3/4 along its
+    outgoing edge, rounding sharp corners — turns the blocky 1deg coastline into
+    smooth curves. Points grow ~2x per pass."""
+    pts = [(float(x), float(y)) for x, y in coords]
+    if len(pts) >= 2 and pts[0] == pts[-1]:
+        pts = pts[:-1]
+    if len(pts) < 3:
+        return coords
+    for _ in range(iters):
+        out = []
+        n = len(pts)
+        for i in range(n):
+            ax, ay = pts[i]
+            bx, by = pts[(i + 1) % n]
+            out.append((0.75 * ax + 0.25 * bx, 0.75 * ay + 0.25 * by))
+            out.append((0.25 * ax + 0.75 * bx, 0.25 * ay + 0.75 * by))
+        pts = out
+    pts.append(pts[0])
+    return pts
 
 
 def _download_dem():
@@ -108,11 +134,23 @@ def _clean_to_rings(polys):
         s = g.simplify(SIMPLIFY_TOL, preserve_topology=True)
         if s.is_empty:
             continue
-        for tile in _tile_geom(s):
-            coords = list(tile.exterior.coords)
-            ring = [[round(float(y), 2), round(float(x), 2)] for x, y in coords]
-            if len(ring) >= 4:
-                rings.append(ring)
+        # Smooth the coastline (round the grid stair-steps), then tile. Smoothing
+        # before tiling keeps the OUTER coast curved; the straight internal tile
+        # seams are invisible (shared edges, same color). Done per polygon so the
+        # exterior is what gets rounded.
+        polys_s = list(s.geoms) if s.geom_type == "MultiPolygon" else [s]
+        for poly in polys_s:
+            smoothed = Polygon(_chaikin(list(poly.exterior.coords), SMOOTH_ITERS)).buffer(0)
+            smoothed = smoothed.simplify(POST_SMOOTH_TOL, preserve_topology=True)
+            if smoothed.is_empty or smoothed.area < MIN_AREA_DEG2:
+                continue
+            sm_list = list(smoothed.geoms) if smoothed.geom_type == "MultiPolygon" else [smoothed]
+            for sm in sm_list:
+                for tile in _tile_geom(sm):
+                    coords = list(tile.exterior.coords)
+                    ring = [[round(float(y), 2), round(float(x), 2)] for x, y in coords]
+                    if len(ring) >= 4:
+                        rings.append(ring)
     return rings
 
 
