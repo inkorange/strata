@@ -61,7 +61,10 @@ export function ModuleFrame({ module, headerAction, children }: ModuleFrameProps
             >
               Module
             </div>
-            <div className="mt-0.5 flex items-center justify-between gap-3">
+            {/* flex-wrap so a wide headerAction (e.g. the Atmosphere layer
+             * chips) drops below the title on the narrow desktop card instead
+             * of overflowing off the right edge. */}
+            <div className="mt-0.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
               <h1 className="text-lg font-semibold text-white tracking-tight">{module.label}</h1>
               {headerAction ? <div className="shrink-0">{headerAction}</div> : null}
             </div>
