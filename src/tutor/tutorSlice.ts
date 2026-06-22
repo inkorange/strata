@@ -36,5 +36,5 @@ export const createTutorSlice: StateCreator<TutorSlice> = (set) => ({
 
   setStreaming: (v) => set((s) => ({ tutor: { ...s.tutor, streaming: v } })),
 
-  clearTutor: () => set((s) => ({ tutor: { ...s.tutor, messages: [] } })),
+  clearTutor: () => set((s) => ({ tutor: { ...s.tutor, messages: [], streaming: false } })),
 })
