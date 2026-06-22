@@ -25,3 +25,17 @@ export function detectTier(): Tier {
   if (cores >= 8 && mem >= 8) return 'desktop-ultra'
   return 'balanced'
 }
+
+/** Teaching audience used by the tutor + module copy. */
+export type TutorAudience = 'beginner' | 'standard' | 'advanced'
+
+/**
+ * Map a device/override Tier (or null = no override) to a teaching audience.
+ * mobile-lite → beginner, desktop-ultra → advanced, everything else → standard.
+ * Single source of truth for both the AI tutor and per-module description copy.
+ */
+export function tutorTier(tier: Tier | null): TutorAudience {
+  if (tier === 'mobile-lite') return 'beginner'
+  if (tier === 'desktop-ultra') return 'advanced'
+  return 'standard'
+}
