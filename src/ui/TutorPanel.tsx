@@ -1,8 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { tutorTier } from '@/src/lib/tier'
 import { MODULES } from '@/src/shell/modules'
 import { useStore } from '@/src/store'
+import { type SceneSnapshot, sceneToPrompt } from '@/src/tutor/sceneToPrompt'
+import { streamTutorReply } from '@/src/tutor/streamTutorReply'
 import { AssistantIcon } from './icons/AssistantIcon'
 
 const SUGGESTED_PROMPTS: Record<string, string[]> = {
@@ -24,11 +27,65 @@ const SUGGESTED_PROMPTS: Record<string, string[]> = {
   ],
 }
 
+/** Read exactly the fields sceneToPrompt needs out of the live store. */
+function snapshot(): SceneSnapshot {
+  const s = useStore.getState()
+  return {
+    activeModule: s.activeModule,
+    currentEraId: s.currentEraId,
+    targetEraId: s.targetEraId,
+    season: s.season,
+    hour: s.hour,
+    layers: s.layers,
+    scenario: s.scenario,
+    fossilLever: s.fossilLever,
+    landLever: s.landLever,
+    elapsedYears: s.elapsedYears,
+    masses: s.masses,
+  }
+}
+
 export function TutorPanel() {
   const activeModule = useStore((s) => s.activeModule)
+  const tierOverride = useStore((s) => s.tierOverride)
+  const messages = useStore((s) => s.tutor.messages)
+  const streaming = useStore((s) => s.tutor.streaming)
+  const addTutorMessage = useStore((s) => s.addTutorMessage)
+  const appendToLast = useStore((s) => s.appendToLast)
+  const setStreaming = useStore((s) => s.setStreaming)
+
   const [open, setOpen] = useState(false)
+  const [question, setQuestion] = useState('')
+  const logRef = useRef<HTMLDivElement>(null)
+
   const prompts = SUGGESTED_PROMPTS[activeModule] ?? SUGGESTED_PROMPTS.hub ?? []
   const accent = activeModule === 'hub' ? '#dffaff' : MODULES[activeModule].accentHex
+
+  // Keep the newest token in view while streaming.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: depends on messages reference for streamed growth
+  useEffect(() => {
+    const el = logRef.current
+    if (el) el.scrollTop = el.scrollHeight
+  }, [messages])
+
+  async function ask(q: string) {
+    if (!q.trim() || streaming) return
+    addTutorMessage({ role: 'user', content: q, ts: Date.now() })
+    addTutorMessage({ role: 'assistant', content: '', ts: Date.now() })
+    setStreaming(true)
+    setQuestion('')
+    try {
+      await streamTutorReply({
+        sceneSummary: sceneToPrompt(snapshot()),
+        module: activeModule,
+        tier: tutorTier(tierOverride),
+        question: q,
+        onChunk: (chunk) => appendToLast(chunk),
+      })
+    } finally {
+      setStreaming(false)
+    }
+  }
 
   return (
     <>
@@ -62,32 +119,64 @@ export function TutorPanel() {
               Close
             </button>
           </header>
-          <div className="mb-3 text-xs text-muted-foreground">
-            Wired up in a later phase. Suggested prompts for this module:
+
+          <div ref={logRef} className="mb-3 min-h-0 flex-1 space-y-2 overflow-y-auto">
+            {messages.length === 0 ? (
+              <div className="text-xs text-muted-foreground">
+                Ask about the current scene. Suggestions:
+                <ul className="mt-2 space-y-2">
+                  {prompts.map((p) => (
+                    <li key={p}>
+                      <button
+                        type="button"
+                        onClick={() => ask(p)}
+                        disabled={streaming}
+                        className="w-full rounded border border-border/40 bg-background/40 px-3 py-2 text-left text-foreground/90 hover:bg-background/70 disabled:opacity-50"
+                      >
+                        {p}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              messages.map((m, i) => (
+                <div
+                  // biome-ignore lint/suspicious/noArrayIndexKey: messages are append-only, never reordered or removed
+                  key={`${m.ts}-${i}`}
+                  className={
+                    m.role === 'user'
+                      ? 'rounded bg-background/60 px-3 py-2 text-sm text-foreground'
+                      : 'px-1 py-1 text-sm text-foreground/90'
+                  }
+                >
+                  {m.content || (streaming ? '…' : '')}
+                </div>
+              ))
+            )}
           </div>
-          <ul className="space-y-2 text-sm">
-            {prompts.map((p) => (
-              <li
-                key={p}
-                className="rounded border border-border/40 bg-background/40 px-3 py-2 text-foreground/90"
-              >
-                {p}
-              </li>
-            ))}
-          </ul>
-          <form className="mt-4 flex gap-2" onSubmit={(e) => e.preventDefault()}>
+
+          <form
+            className="flex gap-2"
+            onSubmit={(e) => {
+              e.preventDefault()
+              ask(question)
+            }}
+          >
             <input
               type="text"
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
               placeholder="Ask…"
-              disabled
+              disabled={streaming}
               className="flex-1 rounded border border-border/40 bg-background/40 px-3 py-2 text-sm placeholder:text-muted-foreground disabled:opacity-60"
             />
             <button
               type="submit"
-              disabled
-              className="rounded bg-foreground/20 px-3 py-2 text-xs text-foreground/60"
+              disabled={streaming || !question.trim()}
+              className="rounded bg-foreground/20 px-3 py-2 text-xs text-foreground/80 disabled:opacity-50"
             >
-              Soon
+              {streaming ? '…' : 'Send'}
             </button>
           </form>
         </aside>
