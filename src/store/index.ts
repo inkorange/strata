@@ -2,12 +2,14 @@ import { create } from 'zustand'
 import { type AtmosphereSlice, createAtmosphereSlice } from '@/src/atmos/atmosphereSlice'
 import { createSystemsSlice, type SystemsSlice } from '@/src/systems/systemsSlice'
 import { createTectonicsSlice, type TectonicsSlice } from '@/src/tectonics/tectonicsSlice'
+import { createTutorSlice, type TutorSlice } from '@/src/tutor/tutorSlice'
 import { createShellSlice, type ShellSlice } from './shellSlice'
 
 type Store = ShellSlice &
   TectonicsSlice &
   AtmosphereSlice &
-  SystemsSlice & {
+  SystemsSlice &
+  TutorSlice & {
     /** Test-only helper: flush the persist debounce synchronously. */
     __flushPersist?: () => void
   }
@@ -46,6 +48,7 @@ export const useStore = create<Store>()((set, get, api) => {
   const tectonicsSlicePart = createTectonicsSlice(set, get, api)
   const atmosphereSlicePart = createAtmosphereSlice(set, get, api)
   const systemsSlicePart = createSystemsSlice(set, get, api)
+  const tutorSlicePart = createTutorSlice(set, get, api)
   const rehydrated = readPersistedShell()
 
   return {
@@ -53,6 +56,7 @@ export const useStore = create<Store>()((set, get, api) => {
     ...tectonicsSlicePart,
     ...atmosphereSlicePart,
     ...systemsSlicePart,
+    ...tutorSlicePart,
     ...rehydrated,
     __flushPersist: () => persistShell(get() as ShellSlice),
   }
