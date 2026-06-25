@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { tutorTier } from '@/src/lib/tier'
 import { detectTier } from './tier'
 
 type NavLike = Partial<Navigator> & {
@@ -60,5 +61,16 @@ describe('detectTier', () => {
     vi.stubGlobal('matchMedia', undefined)
     mockNavigator({})
     expect(detectTier()).toBe('balanced')
+  })
+})
+
+describe('tutorTier', () => {
+  it('maps device tiers to teaching audiences', () => {
+    expect(tutorTier('mobile-lite')).toBe('beginner')
+    expect(tutorTier('desktop-ultra')).toBe('advanced')
+    expect(tutorTier('balanced')).toBe('standard')
+  })
+  it('defaults null (no override) to standard', () => {
+    expect(tutorTier(null)).toBe('standard')
   })
 })

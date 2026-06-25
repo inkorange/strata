@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { tutorTier } from '@/src/lib/tier'
 import { useStore } from '@/src/store'
 import { ERAS_BY_ID, type Era } from '../eras'
 import { Timeline } from './Timeline'
@@ -32,10 +33,11 @@ export function TectonicsBody() {
   //   desktop-ultra -> Advanced
   //   null (auto) -> Standard (sensible default)
   const effectiveTierOverride = mounted ? tierOverride : null
+  const audience = tutorTier(effectiveTierOverride)
   const description =
-    effectiveTierOverride === 'mobile-lite'
+    audience === 'beginner'
       ? era.descriptionBeginner
-      : effectiveTierOverride === 'desktop-ultra'
+      : audience === 'advanced'
         ? era.descriptionAdvanced
         : era.descriptionStandard
 
