@@ -105,7 +105,7 @@ export function TutorPanel() {
         <aside
           className="pointer-events-auto absolute z-20 flex flex-col border border-border/40 bg-card/90 p-4 backdrop-blur
             inset-x-4 bottom-20 max-h-[60dvh] rounded-lg
-            sm:inset-y-6 sm:right-6 sm:bottom-20 sm:left-auto sm:top-auto sm:w-80 sm:max-h-none"
+            sm:right-6 sm:bottom-20 sm:left-auto sm:top-auto sm:w-80 sm:max-h-[calc(100dvh-11rem)]"
           aria-label="Tutor"
         >
           <header className="mb-3 flex items-center justify-between">
@@ -169,7 +169,7 @@ export function TutorPanel() {
               onChange={(e) => setQuestion(e.target.value)}
               placeholder="Ask…"
               disabled={streaming}
-              className="flex-1 rounded border border-border/40 bg-background/40 px-3 py-2 text-sm placeholder:text-muted-foreground disabled:opacity-60"
+              className="flex-1 rounded border border-border/40 bg-background/40 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground disabled:opacity-60"
             />
             <button
               type="submit"
