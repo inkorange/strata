@@ -92,7 +92,7 @@ export function TutorPanel() {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="pointer-events-auto absolute bottom-4 right-4 z-20 inline-flex h-14 w-14 items-center justify-center rounded-lg border border-white/[0.08] bg-[#0d0a1f]/92 backdrop-blur-xl transition-colors hover:bg-[#15102e]/92"
+        className="pointer-events-auto absolute bottom-4 right-4 z-50 inline-flex h-14 w-14 items-center justify-center rounded-lg border border-white/[0.08] bg-[#0d0a1f]/92 backdrop-blur-xl transition-colors hover:bg-[#15102e]/92"
         style={{ color: accent }}
         aria-expanded={open}
         aria-label="Ask the tutor"
@@ -103,7 +103,7 @@ export function TutorPanel() {
 
       {open && (
         <aside
-          className="pointer-events-auto absolute z-20 flex flex-col border border-border/40 bg-card/90 p-4 backdrop-blur
+          className="pointer-events-auto absolute z-50 flex flex-col border border-border/40 bg-card/90 p-4 backdrop-blur
             inset-x-4 bottom-20 max-h-[60dvh] rounded-lg
             sm:right-6 sm:bottom-20 sm:left-auto sm:top-auto sm:w-80 sm:max-h-[calc(100dvh-11rem)]"
           aria-label="Tutor"
